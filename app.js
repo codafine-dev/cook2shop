@@ -110,3 +110,26 @@ function askAI() {
     // 跳转到 ChatGPT，并将指令放在 URL 参数里 (ChatGPT 允许通过 q 参数传词)
     window.open(`https://chatgpt.com/?q=${encodedPrompt}`, '_blank');
 }
+
+// 在 checkImport 函数里增加对分享参数的解析
+function checkImport() {
+    const params = new URLSearchParams(window.location.search);
+    
+    // 优先处理“分享”过来的文本
+    const sharedText = params.get('text') || params.get('import');
+    
+    if (sharedText) {
+        try {
+            // 这里的正则逻辑：从一大堆文字里抠出 { ... }
+            const jsonMatch = sharedText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const data = JSON.parse(jsonMatch[0].replace(/\n/g, ' '));
+                saveToLocal(data);
+                window.history.replaceState({}, document.title, "/");
+                renderRecipes();
+            }
+        } catch (e) {
+            console.error("Échec de l'importation partagée");
+        }
+    }
+}

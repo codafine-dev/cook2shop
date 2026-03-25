@@ -1,0 +1,24 @@
+{
+    "name": "Cook2Shop",
+    "short_name": "C2S",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0d6efd",
+    "icons": [
+      {
+        "src": "https://cdn-icons-png.flaticon.com/512/3703/3703377.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ],
+    "share_target": {
+      "action": "/import-share",
+      "method": "GET",
+      "params": {
+        "title": "title",
+        "text": "text",
+        "url": "url"
+      }
+    }
+  }
