@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hopla Pocket MVP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .recipe-card { border-radius: 15px; border: none; transition: 0.2s; }
+        .tag-badge { font-size: 0.7rem; padding: 4px 8px; }
+        .token-info { font-family: monospace; font-size: 0.65rem; color: #6c757d; }
+    </style>
+</head>
+<body class="bg-light p-3">
+
+<div class="container" style="max-width: 500px;">
+    <h2 class="fw-bold text-primary mb-1">🛒 Hopla Pocket</h2>
+    <p class="text-muted small mb-4">Étape 1 : Structure de Données & Audit</p>
+
+    <div class="card shadow-sm mb-4 p-3">
+        <input type="text" id="urlInput" class="form-control mb-2" placeholder="Coller l'URL de la recette...">
+        <button class="btn btn-primary w-100" onclick="simulateAIAnalysis()">
+            Analyser & Enregistrer
+        </button>
+    </div>
+
+    <div class="mb-3 d-flex gap-2">
+        <input type="date" id="dateFilter" class="form-control form-control-sm" onchange="renderList()">
+        <button class="btn btn-outline-secondary btn-sm" onclick="clearFilter()">Tous</button>
+    </div>
+
+    <div id="displayArea" class="row">
+        </div>
+</div>
+
+<script>
+    // --- Function 1: 模拟 AI 解析并存入 LocalStorage ---
+    function simulateAIAnalysis() {
+        const url = document.getElementById('urlInput').value;
+        if (!url) return alert("Veuillez coller une URL");
+
+        // 模拟 AI 返回的增强型 JSON 结构
+        const mockRecipe = {
+            id: Date.now(),
+            date: new Date().toISOString().split('T')[0], // 格式: 2026-03-24
+            title: "Recette de " + url.split('/')[2], // 简单抓个域名当标题
+            tags: ["Vegi", "GF"], // 模拟 AI 识别的标签
+            tokens: {
+                prompt: 850,
+                completion: 120,
+                total: 970,
+                cost: 0.0005 // 模拟欧元成本
+            },
+            ingredients: ["Farine", "Oeufs", "Lait"]
+        };
+
+        // 存入 LocalStorage
+        let list = JSON.parse(localStorage.getItem('hopla_recipes') || '[]');
+        list.unshift(mockRecipe);
+        localStorage.setItem('hopla_recipes', JSON.stringify(list));
+
+        // 重置 UI
+        document.getElementById('urlInput').value = '';
+        renderList();
+    }
+
+    // --- Function 2: 渲染列表 (带过滤逻辑) ---
+    function renderList() {
+        const list = JSON.parse(localStorage.getItem('hopla_recipes') || '[]');
+        const filterDate = document.getElementById('dateFilter').value;
+        const container = document.getElementById('displayArea');
+        
+        container.innerHTML = '';
+
+        // 过滤逻辑
+        const filteredList = filterDate 
+            ? list.filter(r => r.date === filterDate) 
+            : list;
+
+        filteredList.forEach(item => {
+            // 生成标签 HTML
+            const tagsHTML = item.tags.map(t => 
+                `<span class="badge rounded-pill bg-success tag-badge me-1">${t}</span>`
+            ).join('');
+
+            container.innerHTML += `
+                <div class="col-12 mb-3">
+                    <div class="card shadow-sm recipe-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h6 class="fw-bold mb-1">${item.title}</h6>
+                                <small class="text-muted" style="font-size: 0.7rem;">${item.date}</small>
+                            </div>
+                            <div class="mb-2">${tagsHTML}</div>
+                            <div class="token-info border-top pt-2 mt-2 d-flex justify-content-between">
+                                <span>⚡ AI Usage: ${item.tokens.total} tokens</span>
+                                <span>Cost: ${item.tokens.cost} €</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // --- Function 3: 清除日期过滤 ---
+    function clearFilter() {
+        document.getElementById('dateFilter').value = '';
+        renderList();
+    }
+
+    // 页面初始化
+    document.addEventListener('DOMContentLoaded', renderList);
+</script>
+
+</body>
+</html>
