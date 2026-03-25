@@ -93,3 +93,20 @@ function clearDateFilter() {
     document.getElementById('dateFilter').value = '';
     renderRecipes();
 }
+
+// --- 自动跳转 ChatGPT 并携带指令 ---
+function askAI() {
+    const url = document.getElementById('urlInput').value;
+    if (!url) return alert("Collez d'abord une URL !");
+
+    // 预设的超级 Prompt
+    const prompt = `Analyses cette recette : ${url}. 
+    Réponds UNIQUEMENT avec un objet JSON strict : 
+    {"title":"...","tags":["Vegi","GF"],"ingredients":["..."],"tokens":{"total":500,"cost":0.0002}}`;
+
+    // 编码成 URL 安全格式
+    const encodedPrompt = encodeURIComponent(prompt);
+
+    // 跳转到 ChatGPT，并将指令放在 URL 参数里 (ChatGPT 允许通过 q 参数传词)
+    window.open(`https://chatgpt.com/?q=${encodedPrompt}`, '_blank');
+}
