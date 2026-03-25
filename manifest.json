@@ -13,7 +13,7 @@
       }
     ],
     "share_target": {
-      "action": "/import-share",
+      "action": "/",
       "method": "GET",
       "params": {
         "title": "title",

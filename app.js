@@ -115,21 +115,36 @@ function askAI() {
 function checkImport() {
     const params = new URLSearchParams(window.location.search);
     
-    // 优先处理“分享”过来的文本
-    const sharedText = params.get('text') || params.get('import');
-    
+    // 手机分享会把文字或链接放在 'text' 或 'url' 参数里
+    const sharedText = params.get('text') || params.get('url') || params.get('import');
+
     if (sharedText) {
-        try {
-            // 这里的正则逻辑：从一大堆文字里抠出 { ... }
-            const jsonMatch = sharedText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                const data = JSON.parse(jsonMatch[0].replace(/\n/g, ' '));
-                saveToLocal(data);
-                window.history.replaceState({}, document.title, "/");
-                renderRecipes();
-            }
-        } catch (e) {
-            console.error("Échec de l'importation partagée");
+        // 逻辑 A: 如果分享的是 Marmiton 的链接 (包含 http)
+        if (sharedText.includes('http')) {
+            const marmitonUrl = sharedText.match(/https?:\/\/[^\s]+/)[0];
+            // 自动跳转到 ChatGPT 并携带预设 Prompt
+            askAI(marmitonUrl); 
+        } 
+        // 逻辑 B: 如果分享的是 ChatGPT 回传的 JSON (包含 { )
+        else if (sharedText.includes('{')) {
+            try {
+                const jsonMatch = sharedText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    const data = JSON.parse(jsonMatch[0].replace(/\n/g, ' '));
+                    saveToLocal(data);
+                    renderRecipes();
+                }
+            } catch (e) { alert("Format JSON invalide"); }
         }
+        
+        // 清理 URL 避免重复触发
+        window.history.replaceState({}, document.title, "/");
     }
+}
+
+// 自动去 ChatGPT 的函数
+function askAI(targetUrl) {
+    const prompt = `Analyses cette recette : ${targetUrl}. Réponds UNIQUEMENT avec un objet JSON strict : {"title":"...","tags":["Vegi","GF"],"ingredients":["..."],"tokens":{"total":500,"cost":0.0002}}`;
+    // 在新窗口打开 ChatGPT
+    window.open(`https://chatgpt.com/?q=${encodeURIComponent(prompt)}`, '_blank');
 }
