@@ -1,22 +1,543 @@
-.recipe-card { 
-    border-radius: 15px; 
-    border: none; 
-    transition: transform 0.2s; 
-}
+/* ============================================================
+   COOK2SHOP — style.css
+   Thème sombre, typographie éditoriale.
+   Variables CSS centralisées pour modifier facilement les couleurs.
+   ============================================================ */
 
-.recipe-card:hover {
-    transform: translateY(-3px);
-}
-
-.tag-badge { 
-    font-size: 0.7rem; 
-    padding: 4px 8px; 
-}
-
-.token-info { 
-    font-family: 'Courier New', monospace; 
-    font-size: 0.65rem; 
-    color: #6c757d; 
-    border-top: 1px solid #eee;
-    padding-top: 10px;
-}
+/* ── Reset minimal ── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* ── Variables de couleur ──────────────────────────────────
+     Modifier ici pour changer tout le thème d'un coup.
+     ─────────────────────────────────────────────────────── */
+  :root {
+    --bg:           #0f0e0b;   /* fond principal */
+    --surface:      #1a1812;   /* fond des inputs et cartes */
+    --surface2:     #242019;   /* fond hover / actif */
+    --border:       #2e2a22;   /* bordures légères */
+    --border2:      #3d3830;   /* bordures plus visibles */
+    --text:         #e8e0d0;   /* texte principal */
+    --text-dim:     #7a7060;   /* texte secondaire */
+    --text-muted:   #4a4438;   /* texte très atténué / placeholders */
+    --accent:       #d4611a;   /* orange — couleur d'action */
+    --accent-glow:  rgba(212, 97, 26, 0.15); /* halo focus */
+    --green:        #5a8a52;   /* vert — ingrédient coché */
+    --green-dim:    #1e3019;   /* fond vert atténué */
+  }
+  
+  /* ── Base ── */
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+  
+  /* ── Conteneur principal ── */
+  .app {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 20px 80px; /* padding-bottom pour ne pas couper sur mobile */
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     HEADER
+     ══════════════════════════════════════════════════════ */
+  .header {
+    padding: 40px 0 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+  
+  /* Petite étiquette au-dessus du titre */
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  
+  /* Titre principal en serif */
+  .title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: clamp(30px, 6vw, 48px); /* responsive */
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  
+  /* Le "2" en italique orange dans "Cook2Shop" */
+  .title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  
+  .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     ÉTAPES (step)
+     ══════════════════════════════════════════════════════ */
+  .step {
+    margin-bottom: 28px;
+  }
+  
+  /* Label "1 — Colle l'URL…" */
+  .step-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  /* Cercle numéroté */
+  .step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     INPUTS
+     ══════════════════════════════════════════════════════ */
+  
+  /* Ligne URL + bouton côte à côte */
+  .input-row {
+    display: flex;
+    gap: 8px;
+  }
+  
+  input[type="text"],
+  input[type="date"] {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 12px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    /* Animation douce au focus */
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  input::placeholder {
+    color: var(--text-muted);
+  }
+  
+  /* Halo orange au focus */
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  
+  /* Textarea pour le JSON */
+  .paste-area {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 12px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    resize: vertical;
+    min-height: 90px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .paste-area::placeholder {
+    color: var(--text-muted);
+  }
+  
+  .paste-area:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     BOUTONS
+     ══════════════════════════════════════════════════════ */
+  .btn {
+    padding: 12px 18px;
+    border-radius: 3px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  
+  /* Bouton principal : fond orange */
+  .btn-accent {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-accent:hover {
+    background: #e07020;
+  }
+  
+  /* Bouton secondaire : contour seulement */
+  .btn-outline {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border2);
+  }
+  .btn-outline:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+  
+  /* Variante petite taille */
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+  
+  /* Groupe de boutons côte à côte */
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     SÉLECTEUR D'IA (chips)
+     ══════════════════════════════════════════════════════ */
+  .ai-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .ai-chip {
+    padding: 7px 14px;
+    border-radius: 20px; /* pill */
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  
+  .ai-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  
+  /* Chip sélectionnée */
+  .ai-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     BOÎTE DU PROMPT GÉNÉRÉ
+     ══════════════════════════════════════════════════════ */
+  .prompt-box {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    white-space: pre-wrap; /* respecte les sauts de ligne du prompt */
+    margin-bottom: 10px;
+    word-break: break-word;
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     SÉPARATEUR
+     ══════════════════════════════════════════════════════ */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     SECTION "MES RECETTES"
+     ══════════════════════════════════════════════════════ */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .section-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 18px;
+    font-style: italic;
+  }
+  
+  /* Filtre date + bouton reset */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     CARTE DE RECETTE
+     ══════════════════════════════════════════════════════ */
+  .recipe-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-bottom: 10px;
+    /* Animation d'apparition */
+    animation: fadeIn 0.2s ease both;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Header cliquable de la carte (titre + compteur + chevron) */
+  .recipe-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    gap: 12px;
+    /* Transition pour le hover */
+    transition: background 0.1s;
+  }
+  
+  .recipe-card-header:hover {
+    background: var(--surface2);
+  }
+  
+  /* Nom de la recette */
+  .recipe-card-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 15px;
+    font-style: italic;
+    flex: 1;
+  }
+  
+  /* Compteur "2/8" ingrédients cochés */
+  .recipe-card-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  
+  /* Flèche accordéon ▾ / ▲ */
+  .recipe-card-chevron {
+    color: var(--text-muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+  
+  /* Quand la carte est ouverte (.open ajouté par JS), on retourne la flèche */
+  .recipe-card.open .recipe-card-chevron {
+    transform: rotate(180deg);
+  }
+  
+  /* Liste d'ingrédients : cachée par défaut, visible quand .open */
+  .recipe-ingredients {
+    display: none;
+    border-top: 1px solid var(--border);
+  }
+  
+  .recipe-card.open .recipe-ingredients {
+    display: block;
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     LIGNE D'INGRÉDIENT
+     ══════════════════════════════════════════════════════ */
+  .ingredient-row {
+    display: flex;
+    align-items: stretch; /* les enfants s'étendent en hauteur */
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  
+  .ingredient-row:last-child {
+    border-bottom: none;
+  }
+  
+  /* Ingrédient déjà ajouté au panier */
+  .ingredient-row.done {
+    opacity: 0.35;
+  }
+  
+  /* Bouton gauche : coche + nom + quantité */
+  .ing-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    transition: background 0.1s;
+  }
+  
+  .ing-btn:hover {
+    background: var(--surface2);
+  }
+  
+  /* Petite case à cocher custom */
+  .ing-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    border: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  
+  /* Case cochée : fond vert */
+  .ingredient-row.done .ing-check {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  
+  /* Nom de l'ingrédient */
+  .ing-name {
+    font-size: 14px;
+    flex: 1;
+  }
+  
+  /* Barré quand coché */
+  .ingredient-row.done .ing-name {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+  
+  /* Quantité (optionnelle) */
+  .ing-qty {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  
+  /* Bouton droit "→ Carrefour"
+     Ouvre Carrefour dans un NOUVEL ONGLET.
+     La PWA reste ouverte dans l'onglet d'origine. */
+  .carrefour-btn {
+    padding: 0 14px;
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    /* Prend toute la hauteur de la ligne */
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+  }
+  
+  .carrefour-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-left-color: var(--accent);
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     ÉTAT VIDE
+     ══════════════════════════════════════════════════════ */
+  .empty {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--text-muted);
+  }
+  
+  .empty-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  
+  .empty-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 18px;
+    font-style: italic;
+    color: var(--text-dim);
+  }
+  
+  /* ══════════════════════════════════════════════════════
+     TOAST (notification temporaire)
+     Apparaît en bas au centre, disparaît après 2.4s.
+     ══════════════════════════════════════════════════════ */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 3px;
+    font-size: 12px;
+    z-index: 100;
+    white-space: nowrap;
+    /* Entrée + sortie animées */
+    animation: toastIn 0.2s ease, toastOut 0.3s ease 2.1s forwards;
+  }
+  
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  
+  @keyframes toastOut {
+    to { opacity: 0; }
+  }

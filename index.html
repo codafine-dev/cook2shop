@@ -1,37 +1,145 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cook2Shop - AI Retail Assistant</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="/manifest.json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cook2Shop</title>
+
+  <!-- PWA : permet l'installation sur mobile (icône, splash screen, etc.) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f0e0b">
+
+  <!-- Google Fonts : Libre Baskerville (titres) + DM Mono (interface) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- Styles séparés dans style.css -->
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light p-3">
+<body>
+<div class="app">
 
-<div class="container" style="max-width: 500px;">
-    <header class="mb-4">
-        <h2 class="fw-bold text-primary mb-1">🛒 Cook2Shop</h2>
-        <p class="text-muted small">Étape 2 : Extraction & Capture AI</p>
-    </header>
+  <!-- ══════════════════════════════════════════
+       HEADER — titre et description de l'app
+  ══════════════════════════════════════════ -->
+  <div class="header">
+    <div class="eyebrow">Recipe · Pipeline · v2</div>
+    <div class="title">Cook<em>2</em>Shop</div>
+    <div class="subtitle">URL de recette → liste de courses → Carrefour</div>
+  </div>
 
-    <section class="card shadow-sm mb-4 p-3 border-0">
-        <div class="input-group">
-            <input type="text" id="urlInput" class="form-control" placeholder="Coller l'URL de la recette...">
-            <button class="btn btn-primary" onclick="askAI()">Analyser via ChatGPT</button>
-        </div>
-    </section>
+  <!-- ══════════════════════════════════════════
+       ÉTAPE 1 — Saisie de l'URL de recette
+       Toujours visible.
+       Au clic "Préparer" → preparePrompt() dans app.js
+       génère le prompt et révèle les étapes 2 et 3.
+  ══════════════════════════════════════════ -->
+  <div class="step">
+    <div class="step-label">
+      <span class="step-num">1</span>
+      Colle l'URL de la recette
+    </div>
+    <div class="input-row">
+      <input
+        type="text"
+        id="urlInput"
+        placeholder="https://www.marmiton.org/recettes/…"
+      />
+      <button class="btn btn-accent" onclick="preparePrompt()">
+        Préparer
+      </button>
+    </div>
+  </div>
 
-    <section class="mb-3 d-flex gap-2">
-        <input type="date" id="dateFilter" class="form-control form-control-sm" onchange="renderRecipes()">
-        <button class="btn btn-outline-secondary btn-sm" onclick="clearDateFilter()">Tous</button>
-    </section>
+  <!-- ══════════════════════════════════════════
+       ÉTAPE 2 — Choisir son IA et copier le prompt
+       Masquée par défaut (style="display:none").
+       app.js la rend visible après l'étape 1.
 
-    <main id="recipeContainer" class="row">
-        </main>
+       Flow :
+       1. L'utilisateur clique sur son IA préférée (ChatGPT, Gemini…)
+       2. Le prompt s'affiche dans #promptBox
+       3. "Copier & ouvrir l'IA" → copie le prompt dans le
+          presse-papier ET ouvre l'IA dans un nouvel onglet
+          (la PWA reste ouverte dans l'onglet d'origine)
+  ══════════════════════════════════════════ -->
+  <div class="step" id="step2" style="display:none">
+    <div class="step-label">
+      <span class="step-num">2</span>
+      Envoie ce prompt à ton IA
+    </div>
+
+    <!-- Chips de sélection d'IA — selectAI() dans app.js -->
+    <div class="ai-chips" id="aiChips">
+      <button class="ai-chip active" onclick="selectAI('chatgpt', this)">ChatGPT</button>
+      <button class="ai-chip" onclick="selectAI('gemini', this)">Gemini</button>
+      <button class="ai-chip" onclick="selectAI('claude', this)">Claude</button>
+      <button class="ai-chip" onclick="selectAI('copilot', this)">Copilot</button>
+    </div>
+
+    <!-- Le prompt généré est affiché ici par app.js (updatePromptBox) -->
+    <div class="prompt-box" id="promptBox"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-accent" onclick="copyAndOpenAI()">
+        📋 Copier &amp; ouvrir l'IA
+      </button>
+      <button class="btn btn-outline" onclick="copyPromptOnly()">
+        Copier seulement
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ÉTAPE 3 — Coller la réponse JSON de l'IA
+       Masquée par défaut.
+       L'utilisateur colle ici le JSON que l'IA a retourné.
+       importJSON() dans app.js parse, valide et sauvegarde
+       la recette dans localStorage.
+  ══════════════════════════════════════════ -->
+  <div class="step" id="step3" style="display:none">
+    <div class="step-label">
+      <span class="step-num">3</span>
+      Colle la réponse JSON ici
+    </div>
+    <textarea
+      class="paste-area"
+      id="jsonInput"
+      placeholder='{"title":"Tarte aux poireaux","ingredients":["200g de poireaux","crème fraîche","3 oeufs"]}'
+    ></textarea>
+    <div class="btn-row">
+      <button class="btn btn-accent" onclick="importJSON()">
+        Importer
+      </button>
+      <!-- Remet tout à zéro : vide les champs et cache étapes 2 et 3 -->
+      <button class="btn btn-outline" onclick="resetFlow()">
+        Recommencer
+      </button>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════
+       LISTE DES RECETTES SAUVEGARDÉES
+       Filtre optionnel par date d'ajout.
+       #recipeContainer est peuplé dynamiquement
+       par renderRecipes() dans app.js.
+  ══════════════════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-title">Mes recettes</div>
+    <div class="filter-row">
+      <input type="date" id="dateFilter" onchange="renderRecipes()" />
+      <button class="btn btn-outline btn-sm" onclick="clearDateFilter()">✕</button>
+    </div>
+  </div>
+
+  <!-- Cartes de recettes injectées par app.js -->
+  <div id="recipeContainer"></div>
+
 </div>
 
+<!-- app.js chargé en dernier pour avoir accès au DOM -->
 <script src="app.js"></script>
 </body>
 </html>
