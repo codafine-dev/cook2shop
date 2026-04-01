@@ -130,20 +130,37 @@ const AI_URLS = {
    *   Si on avait utilisé window.location.href, on quitterait la PWA
    *   et toute la liste de courses disparaîtrait.
    */
+  // Les IAs qui acceptent ?q= (prompt pré-rempli automatiquement)
+  const AI_AUTO = {
+    chatgpt: (p) => `https://chatgpt.com/?q=${encodeURIComponent(p)}`,
+    claude:  (p) => `https://claude.ai/new?q=${encodeURIComponent(p)}`,
+  };
+
+  // Les IAs qui nécessitent un collage manuel
+  const AI_MANUAL = {
+    gemini: 'https://gemini.google.com/app',
+  };
+
   function copyAndOpenAI() {
     const prompt = buildPrompt(currentUrl);
-    const encoded = encodeURIComponent(prompt);
-  
-    const urls = {
-      chatgpt: `https://chatgpt.com/?q=${encoded}`,
-      gemini:  `https://gemini.google.com/app?q=${encoded}`,
-      claude:  `https://claude.ai/new?q=${encoded}`,
-      copilot: `https://copilot.microsoft.com/?q=${encoded}`,
-    };
-  
-    navigator.clipboard.writeText(prompt).catch(() => {});
-    window.open(urls[selectedAI], '_blank', 'noopener');
-    showToast('Prompt envoyé !');
+
+    if (AI_AUTO[selectedAI]) {
+      // Prompt pré-rempli dans l'URL → pas besoin de coller
+      navigator.clipboard.writeText(prompt).catch(() => {});
+      window.open(AI_AUTO[selectedAI](prompt), '_blank', 'noopener');
+      showToast('Prompt envoyé automatiquement !');
+
+    } else {
+      // Gemini : copie + message explicite
+      navigator.clipboard.writeText(prompt)
+        .then(() => {
+          showToast('✓ Prompt copié — colle avec Ctrl+V dans Gemini');
+          setTimeout(() => window.open(AI_MANUAL[selectedAI], '_blank', 'noopener'), 600);
+        })
+        .catch(() => {
+          window.open(AI_MANUAL[selectedAI], '_blank', 'noopener');
+        });
+    }
   }
   
   /**
