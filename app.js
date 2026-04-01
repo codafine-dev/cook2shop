@@ -133,7 +133,6 @@ const AI_URLS = {
   // Les IAs qui acceptent ?q= (prompt pré-rempli automatiquement)
   const AI_AUTO = {
     chatgpt: (p) => `https://chatgpt.com/?q=${encodeURIComponent(p)}`,
-    claude:  (p) => `https://claude.ai/new?q=${encodeURIComponent(p)}`,
   };
 
   // Les IAs qui nécessitent un collage manuel
