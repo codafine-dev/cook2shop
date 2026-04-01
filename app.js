@@ -132,20 +132,17 @@ const AI_URLS = {
    */
   function copyAndOpenAI() {
     const prompt = buildPrompt(currentUrl);
-    
-    // Copie dans le presse-papier (fallback si l'URL ?q= ne marche pas)
-    navigator.clipboard.writeText(prompt).catch(() => {});
+    const encoded = encodeURIComponent(prompt);
   
-    // Ouvre l'IA avec le prompt pré-rempli dans l'URL
-    // → '_blank' = NOUVEL onglet, la PWA reste ouverte
     const urls = {
-      chatgpt: `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`,
-      gemini:  `https://gemini.google.com/app?q=${encodeURIComponent(prompt)}`,  // pas garanti
-      claude:  `https://claude.ai/new?q=${encodeURIComponent(prompt)}`,           // pas garanti
-      copilot: `https://copilot.microsoft.com/?q=${encodeURIComponent(prompt)}`, // pas garanti
+      chatgpt: `https://chatgpt.com/?q=${encoded}`,
+      gemini:  `https://gemini.google.com/app?q=${encoded}`,
+      claude:  `https://claude.ai/new?q=${encoded}`,
+      copilot: `https://copilot.microsoft.com/?q=${encoded}`,
     };
   
-    window.open(urls[selectedAI] || urls.chatgpt, '_blank', 'noopener');
+    navigator.clipboard.writeText(prompt).catch(() => {});
+    window.open(urls[selectedAI], '_blank', 'noopener');
     showToast('Prompt envoyé !');
   }
   
