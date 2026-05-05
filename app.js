@@ -429,6 +429,17 @@ function buildRecipeCard(recipe) {
   tabCourses.className = 'recipe-tab-content';
   tabCourses.id = `tab-courses-${recipe.id}`;
 
+  const hoplaBtn = document.createElement('button');
+  hoplaBtn.className = 'btn btn-accent';
+  hoplaBtn.style.width = '100%';
+  hoplaBtn.style.marginBottom = '16px';
+  hoplaBtn.textContent = '📋 复制全部给 Hopla';
+  hoplaBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    copyAllForHopla(recipe);
+  });
+  tabCourses.appendChild(hoplaBtn);
+
   const storeChips = document.createElement('div');
   storeChips.className = 'ai-chips'; // Reuse AI chips styling
   Object.entries(STORE_CONFIG).forEach(([id, config]) => {
@@ -584,6 +595,22 @@ function selectStore(store, el) {
   document.querySelectorAll('.store-btn').forEach(btn => {
     const storeName = STORE_CONFIG[selectedStore].name;
     btn.textContent = `→ ${storeName}`;
+  });
+}
+
+function copyAllForHopla(recipe) {
+  const list = recipe.ingredients.map(i => {
+    const text = typeof i === 'string' ? i : i.full;
+    return `- ${text}`;
+  }).join('\\n');
+
+  const prompt = `Bonjour Hopla, peux-tu ajouter ces ingrédients à mon panier s'il te plaît ?\\n\\n${list}`;
+  
+  navigator.clipboard.writeText(prompt).then(() => {
+    showToast('📋 清单已复制！建议在浏览器打开家乐福 $\\rightarrow$ 粘贴给 Hopla 🛒');
+    window.open('https://www.carrefour.fr/', '_blank', 'noopener');
+  }).catch(() => {
+    showToast('复制失败，请重试');
   });
 }
 
