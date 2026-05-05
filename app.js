@@ -622,8 +622,8 @@ function selectStore(store, el) {
 
 function copyAllForHopla(recipe) {
   const list = recipe.ingredients.map(i => {
-    const text = typeof i === 'string' ? i : i.full;
-    return `- ${text}`;
+    const cleanName = typeof i === 'string' ? i : i.name;
+    return `- ${cleanName}`;
   }).join('\\n');
 
   const prompt = `Bonjour Hopla, peux-tu ajouter ces ingrédients à mon panier s'il te plaît ?\\n\\n${list}`;
