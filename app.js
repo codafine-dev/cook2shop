@@ -237,7 +237,8 @@ function renderRecipes() {
 
 function buildRecipeCard(recipe) {
   const card = document.createElement('div');
-  card.className = 'recipe-card';
+  const isNew = Date.now() - recipe.id < 600000;
+  card.className = 'recipe-card' + (isNew ? ' recipe-card-new' : '');
 
   const checkedSet = new Set(recipe.checkedIngredients || []);
   const doneSet    = new Set(recipe.doneSteps || []);
@@ -263,6 +264,13 @@ function buildRecipeCard(recipe) {
       <span class="recipe-card-chevron">▾</span>
     </div>
   `;
+
+  if (isNew) {
+    const badge = document.createElement('span');
+    badge.className = 'new-badge';
+    badge.textContent = 'New';
+    header.querySelector('.recipe-card-title').appendChild(badge);
+  }
 
   header.addEventListener('click', () => card.classList.toggle('open'));
   header.querySelector('.delete-btn').addEventListener('click', (e) => {
