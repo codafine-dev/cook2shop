@@ -12,6 +12,24 @@ const AI_CONFIG = {
   gemini:  { auto: false, url: ()  => 'https://gemini.google.com/app' },
 };
 
+const STORE_CONFIG = {
+  carrefour: { 
+    name: 'Carrefour', 
+    url: 'https://www.carrefour.fr/', 
+    useCopy: true 
+  },
+  leclerc: { 
+    name: 'Leclerc', 
+    url: (q) => `https://www.leclercrelay.fr/recherche?q=${encodeURIComponent(q)}`, 
+    useCopy: false 
+  },
+  auchan: { 
+    name: 'Auchan', 
+    url: (q) => `https://www.auchandrive.fr/search?q=${encodeURIComponent(q)}`, 
+    useCopy: false 
+  },
+};
+
 function buildPrompt(input) {
   return `Analyse cette recette (URL ou texte) : ${input}
 
@@ -48,6 +66,7 @@ async function logEvent(event, data) {
 
 let selectedAI = 'chatgpt';
 let currentUrl = '';
+let selectedStore = 'carrefour';
 
 /* ══════════════════════════════════════════════════════
    3. FLOW PRINCIPAL
@@ -399,6 +418,17 @@ function buildRecipeCard(recipe) {
   tabCourses.className = 'recipe-tab-content';
   tabCourses.id = `tab-courses-${recipe.id}`;
 
+  const storeChips = document.createElement('div');
+  storeChips.className = 'ai-chips'; // Reuse AI chips styling
+  Object.entries(STORE_CONFIG).forEach(([id, config]) => {
+    const chip = document.createElement('button');
+    chip.className = 'ai-chip' + (selectedStore === id ? ' active' : '');
+    chip.textContent = config.name;
+    chip.addEventListener('click', (e) => selectStore(id, e.target));
+    storeChips.appendChild(chip);
+  });
+  tabCourses.appendChild(storeChips);
+
   const ingList = document.createElement('div');
   ingList.className = 'ing-list';
 
@@ -412,7 +442,7 @@ function buildRecipeCard(recipe) {
         <span class="ing-chevron">${isDone ? '✓' : '›'}</span>
         <span class="ing-name">${ing}</span>
       </button>
-      <button class="carrefour-btn" data-ing="${encodeURIComponent(ing)}">→ Carrefour</button>
+      <button class="store-btn" data-ing="${encodeURIComponent(ing)}">→ ${STORE_CONFIG[selectedStore].name}</button>
     `;
 
     row.querySelector('.ing-btn').addEventListener('click', function () {
@@ -430,8 +460,8 @@ function buildRecipeCard(recipe) {
       header.querySelector('.recipe-card-meta').textContent = getMetaText();
     });
 
-    row.querySelector('.carrefour-btn').addEventListener('click', function () {
-      openCarrefour(decodeURIComponent(this.dataset.ing));
+    row.querySelector('.store-btn').addEventListener('click', function () {
+      openStore(decodeURIComponent(this.dataset.ing));
     });
 
     ingList.appendChild(row);
@@ -514,9 +544,34 @@ function buildRecipeCard(recipe) {
    6. INITIALISATION & HELPERS
    ══════════════════════════════════════════════════════ */
 
-function openCarrefour(query) {
-  const url = `https://www.carrefour.fr/recherche?search=${encodeURIComponent(query)}`;
-  window.open(url, '_blank', 'noopener');
+function openStore(query) {
+  const store = STORE_CONFIG[selectedStore];
+  if (!store) return;
+
+  if (store.useCopy) {
+    navigator.clipboard.writeText(query).then(() => {
+      showToast(`Copie: ${query} → Collez dans Carrefour`);
+      window.open(store.url, '_blank', 'noopener');
+    }).catch(() => {
+      showToast('Erreur de copie');
+      window.open(store.url, '_blank', 'noopener');
+    });
+  } else {
+    const url = typeof store.url === 'function' ? store.url(query) : store.url;
+    window.open(url, '_blank', 'noopener');
+  }
+}
+
+function selectStore(store, el) {
+  selectedStore = store;
+  document.querySelectorAll('.store-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  
+  // Update all current buttons in the DOM to reflect new store
+  document.querySelectorAll('.store-btn').forEach(btn => {
+    const storeName = STORE_CONFIG[selectedStore].name;
+    btn.textContent = `→ ${storeName}`;
+  });
 }
 
 function showToast(msg) {

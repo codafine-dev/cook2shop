@@ -365,7 +365,7 @@ input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-gl
 .ing-name { font-size: 13px; flex: 1; }
 .ingredient-row.done .ing-name { text-decoration: line-through; color: var(--text-muted); }
 
-.carrefour-btn {
+.store-btn {
   padding: 0 14px;
   background: none;
   border: none;
@@ -382,7 +382,7 @@ input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-gl
   display: flex;
   align-items: center;
 }
-.carrefour-btn:hover { background: var(--accent); color: white; border-left-color: var(--accent); }
+.store-btn:hover { background: var(--accent); color: white; border-left-color: var(--accent); }
 
 /* ── Onglet Étapes ── */
 .steps-hint {
