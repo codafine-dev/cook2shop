@@ -223,8 +223,10 @@ function renderRecipes() {
         <span class="empty-icon">🛒</span>
         <div class="empty-title">Bienvenue sur PanierRecette !</div>
         <div class="empty-desc" style="font-size:13px; color:var(--text-dim); margin-top:12px; max-width:300px; margin-left:auto; margin-right:auto; line-height:1.6">
-          Transformez vos recettes préférées en listes de courses en un clin d'œil. <br>
-          Commencez par coller une URL ou le texte d'une recette ci-dessus.
+          Transformez vos recettes préférées en listes de courses en 3 étapes simples :<br>
+          1️⃣ Collez une URL ou un texte<br>
+          2️⃣ Laissez l'IA extraire les ingrédients<br>
+          3️⃣ Importez le résultat pour créer votre panier !
         </div>
       </div>`;
     return;
@@ -498,7 +500,3 @@ function buildRecipeCard(recipe) {
   card.appendChild(body);
   return card;
 }
-
-function clearDateFilter() {
-  document.getElementById('dateFilter').value = '';
-  renderRecipes();
