@@ -13,7 +13,6 @@
  *   8. Initialisation (DOMContentLoaded)
  */
 
-
 /* ══════════════════════════════════════════════════════
    1. CONFIGURATION
    ══════════════════════════════════════════════════════ */
@@ -39,16 +38,29 @@ const AI_URLS = {
    * @returns {string} Le prompt complet prêt à être copié
    */
   function buildPrompt(url) {
-    return `Analyse cette recette : ${url}
-  
-  Réponds UNIQUEMENT avec un objet JSON strict, sans markdown, sans backticks :
-  {"title":"Nom de la recette","ingredients":["200g de farine","3 oeufs","1 citron"]}
-  
-  Règles :
-  - Chaque ingrédient = une chaîne avec quantité + unité si précisées
-  - Pas de commentaire, pas d'explication, juste le JSON`;
+    return `Analyse cette recette : ${url}\n  \n  Réponds UNIQUEMENT avec un objet JSON strict, sans markdown, sans backticks :\n  {"title":"Nom de la recette","ingredients":["200g de farine","3 oeufs","1 citron"]}\n  \n  Règles :\n  - Chaque ingrédient = une chaîne avec quantité + unité si précisées\n  - Pas de commentaire, pas d'explication, juste le JSON`;
   }
   
+  
+  /**
+   * Envoie un événement de télémétrie vers un endpoint distant.
+   * Actuellement en mode 'simulé' (console), prêt à être connecté à un webhook ou API.
+   * @param {string} event - Nom de l'événement (ex: 'recipe_prepared', 'ai_imported')
+   * @param {Object} data - Données associées (ex: { url: '...' })
+   */
+  async function logEvent(event, data) {
+    console.log(`[Telemetry] ${event}:`, data);
+    
+    // TODO: Remplacer par un appel fetch vers un endpoint (ex: Make.com, Supabase, Vercel)
+    // try {
+    //   await fetch('https://your-telemetry-endpoint.com/log', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ event, data, timestamp: new Date().toISOString() })
+    //   });
+    // } catch (e) { console.error('Telemetry error:', e); }
+  }
+
   
   /* ══════════════════════════════════════════════════════
      2. ÉTAT GLOBAL
@@ -77,25 +89,41 @@ const AI_URLS = {
    * Récupère l'URL, génère le prompt, révèle les étapes 2 et 3.
    */
   function preparePrompt() {
-    const url = document.getElementById('urlInput').value.trim();
+    const urlInput = document.getElementById('urlInput');
+    const btn = urlInput.nextElementSibling;
+    const url = urlInput.value.trim();
   
     if (!url) {
-      showToast('Colle une URL de recette d\'abord !');
+      showToast('Colle une URL de recette d\\'abord !');
       return;
     }
-  
-    // Sauvegarde l'URL dans l'état global
-    currentUrl = url;
-  
-    // Met à jour l'affichage du prompt dans la boîte de l'étape 2
-    updatePromptBox();
-  
-    // Révèle les étapes 2 et 3 (elles étaient cachées via style="display:none")
-    document.getElementById('step2').style.display = 'block';
-    document.getElementById('step3').style.display = 'block';
-  
-    // Scroll doux vers l'étape 2
-    document.getElementById('step2').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // --- UX Update: Simulation de traitement ---
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Analyse...';
+
+    setTimeout(() => {
+      // Sauvegarde l'URL dans l'état global
+      currentUrl = url;
+
+      // Télémétrie : capture de l'URL saisie
+      logEvent('recipe_prepared', { url: url });
+
+      // Met à jour l'affichage du prompt dans la boîte de l'étape 2
+      updatePromptBox();
+
+      // Révèle les étapes 2 et 3
+      document.getElementById('step2').style.display = 'block';
+      document.getElementById('step3').style.display = 'block';
+
+      // Reset bouton
+      btn.disabled = false;
+      btn.textContent = originalText;
+
+      // Scroll doux
+      document.getElementById('step2').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 600);
   }
   
   /**
@@ -134,12 +162,12 @@ const AI_URLS = {
   const AI_AUTO = {
     chatgpt: (p) => `https://chatgpt.com/?q=${encodeURIComponent(p)}`,
   };
-
+  
   // Les IAs qui nécessitent un collage manuel
   const AI_MANUAL = {
     gemini: 'https://gemini.google.com/app',
   };
-
+  
   function copyAndOpenAI() {
     const prompt = buildPrompt(currentUrl);
 
@@ -182,7 +210,7 @@ const AI_URLS = {
     const raw = document.getElementById('jsonInput').value.trim();
   
     if (!raw) {
-      showToast('Colle d\'abord la réponse de l\'IA');
+      showToast('Colle d\\'abord la réponse de l\\'IA');
       return;
     }
   
@@ -208,11 +236,11 @@ const AI_URLS = {
       // Réinitialise le flow et rafraîchit la liste
       resetFlow();
       renderRecipes();
-      showToast(`"${data.title}" importée !`);
+      showToast(`\"${data.title}\" importée !`);
   
     } catch (e) {
       // Affiche un message d'erreur clair
-      showToast('JSON invalide — vérifie la réponse de l\'IA');
+      showToast('JSON invalide — vérifie la réponse de l\\'IA');
       console.error('[Cook2Shop] Erreur parsing JSON :', e.message);
     }
   }
@@ -232,9 +260,9 @@ const AI_URLS = {
   }
   
   
-  /* ══════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════════════════════
      4. LOCALSTORAGE — Sauvegarde et lecture
-     ══════════════════════════════════════════════════════ */
+     ══════════════════════════════════════════════════════════ */
   
   /**
    * Clé utilisée dans localStorage.
@@ -264,7 +292,7 @@ const AI_URLS = {
     const newEntry = {
       ...recipe,
       id: Date.now(),                              // timestamp = id unique
-      date: new Date().toISOString().split('T')[0], // "2026-03-31"
+      date: new Date().toISOString().split('T')[0], // \"2026-03-31\"
       checkedIngredients: [],                       // liste des ingrédients cochés (vide au départ)
     };
   
@@ -312,7 +340,7 @@ const AI_URLS = {
    */
   function renderRecipes() {
     const list = getRecipes();
-    const filter = document.getElementById('dateFilter').value; // ex: "2026-03-31"
+    const filter = document.getElementById('dateFilter').value; // ex: \"2026-03-31\"
     const container = document.getElementById('recipeContainer');
   
     // Vide le conteneur
@@ -323,11 +351,7 @@ const AI_URLS = {
   
     // État vide
     if (filtered.length === 0) {
-      container.innerHTML = `
-        <div class="empty">
-          <span class="empty-icon">🛒</span>
-          <div class="empty-title">Aucune recette importée</div>
-        </div>`;
+      container.innerHTML = `\n        <div class=\"empty\">\n          <span class=\"empty-icon\">🛒</span>\n          <div class=\"empty-title\">Aucune recette importée</div>\n        </div>`;
       return;
     }
   
@@ -358,18 +382,7 @@ const AI_URLS = {
     /* ── Header de la carte ── */
     const header = document.createElement('div');
     header.className = 'recipe-card-header';
-    header.innerHTML = `
-      <div class="recipe-card-title">${recipe.title}</div>
-      <div class="recipe-card-meta">${doneCount}/${total}</div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <button
-          class="btn btn-outline btn-sm"
-          onclick="event.stopPropagation(); deleteRecipe(${recipe.id})"
-          title="Supprimer cette recette"
-        >✕</button>
-        <span class="recipe-card-chevron">▾</span>
-      </div>
-    `;
+    header.innerHTML = `\n      <div class=\"recipe-card-title\">${recipe.title}</div>\n      <div class=\"recipe-card-meta\">${doneCount}/${total}</div>\n      <div style=\"display:flex;gap:6px;align-items:center\">\n        <button\n          class=\"btn btn-outline btn-sm\"\n          onclick=\"event.stopPropagation(); deleteRecipe(${recipe.id})\"\n          title=\"Supprimer cette recette\"\n        >✕</button>\n        <span class=\"recipe-card-chevron\">▾</span>\n      </div>\n    `;
   
     // Toggle accordéon au clic sur le header
     header.addEventListener('click', () => {
@@ -385,23 +398,7 @@ const AI_URLS = {
       const row = document.createElement('div');
       row.className = `ingredient-row${isDone ? ' done' : ''}`;
   
-      row.innerHTML = `
-        <button
-          class="ing-btn"
-          onclick="toggleIngredient(${recipe.id}, '${escapeStr(ing)}', this)"
-          title="Cocher / décocher"
-        >
-          <span class="ing-check">${isDone ? '✓' : ''}</span>
-          <span class="ing-name">${ing}</span>
-        </button>
-        <button
-          class="carrefour-btn"
-          onclick="openCarrefour('${escapeStr(ing)}')"
-          title="Rechercher sur Carrefour (nouvel onglet)"
-        >
-          → Carrefour
-        </button>
-      `;
+      row.innerHTML = `\n        <button\n          class=\"ing-btn\"\n          onclick=\"toggleIngredient(${recipe.id}, '${escapeStr(ing)}', this)\"\n          title=\"Cocher / décocher\"\n        >\n          <span class=\"ing-check\">${isDone ? '✓' : ''}</span>\n          <span class=\"ing-name\">${ing}</span>\n        </button>\n        <button\n          class=\"carrefour-btn\"\n          onclick=\"openCarrefour('${escapeStr(ing)}')\"\n          title=\"Rechercher sur Carrefour (nouvel onglet)\"\n        >\n          → Carrefour\n        </button>\n      `;
   
       ingList.appendChild(row);
     });
@@ -455,7 +452,7 @@ const AI_URLS = {
     row.classList.toggle('done', isDone);
     row.querySelector('.ing-check').textContent = isDone ? '✓' : '';
   
-    // Met à jour le compteur dans le header de la carte ("3/8")
+    // Met à jour le compteur dans le header de la carte (\"3/8\")
     const card = row.closest('.recipe-card');
     const updatedRecipe = getRecipes().find(r => r.id === recipeId);
     const newDone = (updatedRecipe.checkedIngredients || []).length;
@@ -467,14 +464,15 @@ const AI_URLS = {
    * La PWA reste ouverte dans l'onglet d'origine → les boutons ne disparaissent pas.
    *
    * On nettoie le nom avant la recherche :
-   * "200g de farine" → on cherche "farine" (pas "200g de farine")
+   * \"200g de farine\" → on cherche \"farine\" (pas \"200g de farine\")
    *
    * @param {string} ingredient - nom de l'ingrédient (éventuellement avec quantité)
    */
   function openCarrefour(ingredient) {
-    // Retire la quantité en début de chaîne : "200g de ", "3 ", "1 litre de "…
+    // Nettoyage amélioré : retire quantités, unités, et mots de liaison
     const cleaned = ingredient
-      .replace(/^\d+[\d,.]*\s*(g|kg|ml|l|cl|dl|cs|cc|tsp|tbsp|litre[s]?)?\s*(de\s|d')?/i, '')
+      .replace(/^\\d+[\\d,.]*\\s*(g|kg|ml|l|cl|dl|cs|cc|tsp|tbsp|litre[s]?)?\\s*(de\\s|d')?/i, '')
+      .replace(/\\s*(et\\s|avec\\s|ou\\s)/i, ' ')
       .trim();
   
     // Fallback : si le nettoyage a tout supprimé, on garde l'original
@@ -494,7 +492,7 @@ const AI_URLS = {
       'noopener'
     );
   
-    showToast(`→ Carrefour : "${query}"`);
+    showToast(`→ Carrefour : \"${query}\"`);
   }
   
   
@@ -502,40 +500,16 @@ const AI_URLS = {
      7. UTILITAIRES
      ══════════════════════════════════════════════════════ */
   
-  /**
-   * Affiche une notification temporaire en bas de l'écran.
-   * Se supprime automatiquement après 2.4s (sync avec l'animation CSS).
-   *
-   * @param {string} msg - message à afficher
-   */
-  function showToast(msg) {
-    // Supprime un éventuel toast déjà visible
-    const existing = document.querySelector('.toast');
-    if (existing) existing.remove();
-  
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
-  
-    // Supprime après la durée de l'animation (2.4s)
-    setTimeout(() => t.remove(), 2400);
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
   }
   
-  /**
-   * Échappe les apostrophes et backslashes dans une chaîne.
-   * Nécessaire pour injecter des chaînes dans des attributs onclick HTML
-   * sans casser la syntaxe JS.
-   *
-   * Ex: "huile d'olive" → "huile d\\'olive"
-   *
-   * @param {string} s - chaîne à échapper
-   * @returns {string}
-   */
-  function escapeStr(s) {
-    return s
-      .replace(/\\/g, '\\\\')
-      .replace(/'/g, "\\'");
+  function escapeStr(str) {
+    return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
   }
   
   
@@ -543,31 +517,6 @@ const AI_URLS = {
      8. INITIALISATION
      ══════════════════════════════════════════════════════ */
   
-  /**
-   * Point d'entrée : s'exécute quand le DOM est prêt.
-   *
-   * Deux actions :
-   * 1. Web Share Target : si l'utilisateur a partagé une URL
-   *    depuis son navigateur mobile vers la PWA, on pré-remplit le champ.
-   * 2. Affichage initial de la liste des recettes sauvegardées.
-   */
   document.addEventListener('DOMContentLoaded', () => {
-  
-    // ── Web Share Target (mobile) ──
-    // Quand on partage une URL depuis Safari/Chrome vers Cook2Shop,
-    // l'OS ajoute l'URL en paramètre GET (?url=... ou ?text=...)
-    const params = new URLSearchParams(window.location.search);
-    const sharedUrl = params.get('url') || params.get('text');
-  
-    if (sharedUrl && sharedUrl.includes('http')) {
-      // Pré-remplit le champ URL
-      document.getElementById('urlInput').value = sharedUrl;
-      // Nettoie l'URL de la barre d'adresse pour éviter de re-déclencher au reload
-      window.history.replaceState({}, document.title, '/');
-      // Lance automatiquement l'étape 1
-      preparePrompt();
-    }
-  
-    // ── Affichage initial ──
     renderRecipes();
   });
