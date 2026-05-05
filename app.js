@@ -12,8 +12,8 @@ const AI_CONFIG = {
   gemini:  { auto: false, url: ()  => 'https://gemini.google.com/app' },
 };
 
-function buildPrompt(url) {
-  return `Analyse cette recette : ${url}
+function buildPrompt(input) {
+  return `Analyse cette recette (URL ou texte) : ${input}
 
 Réponds UNIQUEMENT avec un objet JSON strict, sans markdown, sans backticks, sans note, sans explication :
 {
@@ -196,6 +196,19 @@ function deleteRecipe(id) {
    5. RENDU DES RECETTES
    ══════════════════════════════════════════════════════ */
 
+
+function scaleIngredient(ing, currentServings, targetServings) {
+  if (!currentServings || currentServings === targetServings) return ing;
+  const ratio = targetServings / currentServings;
+  const regex = /^(\d+(?:[.,]\d+)?)\s*([a-zA-Z°%]*)\s*(?:de\s|d')?(.+)$/i;
+  const match = ing.match(regex);
+  if (!match) return ing;
+  let value = parseFloat(match[1].replace(',', '.'));
+  const unit = match[2];
+  const name = match[3];
+  const newValue = (value * ratio).toFixed(2).replace(/\.00$/, '').replace(/\.0$/, '');
+  return `${newValue}${unit} ${name}`.trim();
+}
 function renderRecipes() {
   const list = getRecipes();
   const filter = document.getElementById('dateFilter').value;
@@ -295,11 +308,63 @@ function buildRecipeCard(recipe) {
     { label: 'Céréale principale',   value: recipe.main_cereal || null },
   ];
 
+  let localServings = recipe.servings || 4;
+
+  function updateServingsUI(val) {
+    localServings = parseInt(val) || 1;
+    const preview = colRight.querySelector('.fiche-ing-list');
+    if (preview) {
+      preview.innerHTML = recipe.ingredients.map(i => `› ${scaleIngredient(i, recipe.servings, localServings)}`).join('<br>');
+    }
+    const coursesTab = body.querySelector(`#tab-courses-${recipe.id} .ing-list`);
+    if (coursesTab) {
+      coursesTab.innerHTML = '';
+      recipe.ingredients.forEach(ing => {
+        const scaled = scaleIngredient(ing, recipe.servings, localServings);
+        const isDone = checkedSet.has(ing);
+        const row = document.createElement('div');
+        row.className = `ingredient-row${isDone ? ' done' : ''}`;
+        row.innerHTML = `
+          <button class="ing-btn" data-rid="${recipe.id}" data-ing="${encodeURIComponent(ing)}">
+            <span class="ing-chevron">${isDone ? '✓' : '›'}</span>
+            <span class="ing-name">${scaled}</span>
+          </button>
+          <button class="carrefour-btn" data-ing="${encodeURIComponent(scaled)}">→ Carrefour</button>
+        `;
+        row.querySelector('.ing-btn').addEventListener('click', function () {
+          const ingredient = decodeURIComponent(this.dataset.ing);
+          const rid = parseInt(this.dataset.rid, 10);
+          if (checkedSet.has(ingredient)) checkedSet.delete(ingredient);
+          else checkedSet.add(ingredient);
+          updateChecked(rid, [...checkedSet]);
+          const done = checkedSet.has(ingredient);
+          row.classList.toggle('done', done);
+          row.querySelector('.ing-chevron').textContent = done ? '✓' : '›';
+          header.querySelector('.recipe-card-meta').textContent = getMetaText();
+        });
+        row.querySelector('.carrefour-btn').addEventListener('click', function () {
+          openCarrefour(decodeURIComponent(this.dataset.ing));
+        });
+        coursesTab.appendChild(row);
+      });
+    }
+  }
+
   caracRows.forEach(({ label, value }) => {
     if (!value) return;
     const row = document.createElement('div');
     row.className = 'fiche-row';
-    row.innerHTML = `<span class="fiche-label">${label}</span><span class="fiche-value">${value}</span>`;
+    if (label === 'Nombre de personnes') {
+      row.innerHTML = `
+        <span class="fiche-label">${label}</span>
+        <div style="display:flex; align-items:center; gap:4px">
+          <input type="number" class="servings-input" value="${localServings}" min="1" style="width:40px; text-align:center; border:1px solid #ccc; border-radius:4px; font-family:var(--font-mono); font-size:12px">
+          <span style="font-size:11px; color:var(--text-muted)">pers.</span>
+        </div>`;
+      row.querySelector('.servings-input').addEventListener('change', (e) => updateServingsUI(e.target.value));
+    } else {
+      row.innerHTML = `<span class="fiche-label">${label}</span><span class="fiche-value">${value}</span>`;
+    }
     colLeft.appendChild(row);
   });
 
