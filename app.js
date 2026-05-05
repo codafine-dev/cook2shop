@@ -27,14 +27,14 @@ Réponds UNIQUEMENT avec un objet JSON strict, sans markdown, sans backticks, sa
 }
 
 Règles :
-- servings : nombre entier de personnes
-- prep_time : minutes de préparation (entier)
-- cook_time : minutes de cuisson (entier)
-- main_cereal : céréale principale ou null
-- ingredients : liste de chaînes avec quantité + unité
-- steps : liste des étapes de préparation dans l'ordre
-- Si tu ne peux pas accéder à l'URL : {"title":"","ingredients":[],"steps":[]}
-- Aucun autre texte autorisé`;
+|- servings : nombre entier de personnes
+|- prep_time : minutes de préparation (entier)
+|- cook_time : minutes de cuisson (entier)
+|- main_cereal : céréale principale ou null
+|- ingredients : liste de chaînes avec quantité + unité
+|- steps : liste des étapes de préparation dans l'ordre
+|- Si tu ne peux pas accéder à l'URL : {"title":"","ingredients":[],"steps":[]}
+|- Aucun autre texte autorisé`;
 }
 
 async function logEvent(event, data) {
@@ -200,13 +200,13 @@ function deleteRecipe(id) {
 function scaleIngredient(ing, currentServings, targetServings) {
   if (!currentServings || currentServings === targetServings) return ing;
   const ratio = targetServings / currentServings;
-  const regex = /^(\d+(?:[.,]\d+)?)\s*([a-zA-Z°%]*)\s*(?:de\s|d')?(.+)$/i;
+  const regex = /^(\\d+(?:[.,]\\d+)?)\\s*([a-zA-Z°%]*)\\s*(?:de\\s|d')?(.+)$/i;
   const match = ing.match(regex);
   if (!match) return ing;
   let value = parseFloat(match[1].replace(',', '.'));
   const unit = match[2];
   const name = match[3];
-  const newValue = (value * ratio).toFixed(2).replace(/\.00$/, '').replace(/\.0$/, '');
+  const newValue = (value * ratio).toFixed(2).replace(/\\.00$/, '').replace(/\\.0$/, '');
   return `${newValue}${unit} ${name}`.trim();
 }
 function renderRecipes() {
@@ -498,5 +498,49 @@ function buildRecipeCard(recipe) {
 
   card.appendChild(header);
   card.appendChild(body);
+
   return card;
 }
+
+/* ══════════════════════════════════════════════════════
+   6. INITIALISATION & HELPERS
+   ══════════════════════════════════════════════════════ */
+
+function openCarrefour(query) {
+  const url = `https://www.carrefour.fr/recherche?search=${encodeURIComponent(query)}`;
+  window.open(url, '_blank', 'noopener');
+}
+
+function showToast(msg) {
+  console.log(`[Toast] ${msg}`);
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Main Flow
+  document.getElementById('prepareBtn').addEventListener('click', preparePrompt);
+  document.getElementById('copyOpenBtn').addEventListener('click', copyAndOpenAI);
+  document.getElementById('copyOnlyBtn').addEventListener('click', copyPromptOnly);
+  document.getElementById('importBtn').addEventListener('click', importJSON);
+  document.getElementById('resetBtn').addEventListener('click', resetFlow);
+
+  // AI Chips
+  document.querySelectorAll('.ai-chip').forEach(chip => {
+    chip.addEventListener('click', (e) => selectAI(e.target.dataset.ai, e.target));
+  });
+
+  // Filters
+  const dateFilter = document.getElementById('dateFilter');
+  dateFilter.addEventListener('change', renderRecipes);
+  document.getElementById('clearFilterBtn').addEventListener('click', () => {
+    dateFilter.value = '';
+    renderRecipes();
+  });
+
+  // Initial Render
+  renderRecipes();
+});
