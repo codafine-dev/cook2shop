@@ -40,7 +40,11 @@ Réponds UNIQUEMENT avec un objet JSON strict, sans markdown, sans backticks, sa
   "prep_time": 10,
   "cook_time": 15,
   "main_cereal": "Blé tendre",
-  "ingredients": ["225g de farine de blé", "3 oeufs", "50cl de lait"],
+  "ingredients": [
+    { "full": "225g de farine de blé", "name": "farine de blé" },
+    { "full": "3 oeufs", "name": "oeufs" },
+    { "full": "50cl de lait", "name": "lait" }
+  ],
   "steps": ["Mélanger la farine et le sucre.", "Ajouter les oeufs un par un."]
 }
 
@@ -49,7 +53,7 @@ Règles :
 |- prep_time : minutes de préparation (entier)
 |- cook_time : minutes de cuisson (entier)
 |- main_cereal : céréale principale ou null
-|- ingredients : liste de chaînes avec quantité + unité
+|- ingredients : liste d'objets {full: texte complet, name: nom pur sans quantité}
 |- steps : liste des étapes de préparation dans l'ordre
 |- Si tu ne peux pas accéder à l'URL : {"title":"","ingredients":[],"steps":[]}
 |- Aucun autre texte autorisé`;
@@ -347,22 +351,26 @@ function buildRecipeCard(recipe) {
     localServings = parseInt(val) || 1;
     const preview = colRight.querySelector('.fiche-ing-list');
     if (preview) {
-      preview.innerHTML = recipe.ingredients.map(i => `› ${scaleIngredient(i, recipe.servings, localServings)}`).join('<br>');
+      preview.innerHTML = recipe.ingredients.map(i => {
+        const text = typeof i === 'string' ? i : i.full;
+        return `› ${scaleIngredient(text, recipe.servings, localServings)}`;
+      }).join('<br>');
     }
     const coursesTab = body.querySelector(`#tab-courses-${recipe.id} .ing-list`);
     if (coursesTab) {
       coursesTab.innerHTML = '';
       recipe.ingredients.forEach(ing => {
-        const scaled = scaleIngredient(ing, recipe.servings, localServings);
-        const isDone = checkedSet.has(ing);
+        const fullText = typeof ing === 'string' ? ing : ing.full;
+        const scaled = scaleIngredient(fullText, recipe.servings, localServings);
+        const isDone = checkedSet.has(fullText);
         const row = document.createElement('div');
         row.className = `ingredient-row${isDone ? ' done' : ''}`;
         row.innerHTML = `
-          <button class="ing-btn" data-rid="${recipe.id}" data-ing="${encodeURIComponent(ing)}">
+          <button class="ing-btn" data-rid="${recipe.id}" data-ing="${encodeURIComponent(fullText)}">
             <span class="ing-chevron">${isDone ? '✓' : '›'}</span>
             <span class="ing-name">${scaled}</span>
           </button>
-          <button class="carrefour-btn" data-ing="${encodeURIComponent(scaled)}">→ Carrefour</button>
+          <button class="store-btn" data-ing="${encodeURIComponent(typeof ing === 'string' ? ing : ing.name)}">→ ${STORE_CONFIG[selectedStore].name}</button>
         `;
         row.querySelector('.ing-btn').addEventListener('click', function () {
           const ingredient = decodeURIComponent(this.dataset.ing);
@@ -375,8 +383,8 @@ function buildRecipeCard(recipe) {
           row.querySelector('.ing-chevron').textContent = done ? '✓' : '›';
           header.querySelector('.recipe-card-meta').textContent = getMetaText();
         });
-        row.querySelector('.carrefour-btn').addEventListener('click', function () {
-          openCarrefour(decodeURIComponent(this.dataset.ing));
+        row.querySelector('.store-btn').addEventListener('click', function () {
+          openStore(decodeURIComponent(this.dataset.ing));
         });
         coursesTab.appendChild(row);
       });
@@ -403,11 +411,14 @@ function buildRecipeCard(recipe) {
 
   const colRight = document.createElement('div');
   colRight.className = 'fiche-col';
-  colRight.innerHTML = `<div class="fiche-col-title">Ingrédients</div>`;
+  colRight.innerHTML = `<div class=\"fiche-col-title\">Ingrédients</div>`;
 
   const ingPreview = document.createElement('div');
   ingPreview.className = 'fiche-ing-list';
-  ingPreview.innerHTML = recipe.ingredients.map(i => `› ${i}`).join('<br>');
+  ingPreview.innerHTML = recipe.ingredients.map(i => {
+    const text = typeof i === 'string' ? i : i.full;
+    return `› ${text}`;
+  }).join('<br>');
   colRight.appendChild(ingPreview);
 
   ficheGrid.appendChild(colLeft);
@@ -433,16 +444,18 @@ function buildRecipeCard(recipe) {
   ingList.className = 'ing-list';
 
   recipe.ingredients.forEach(ing => {
-    const isDone = checkedSet.has(ing);
+    const fullText = typeof ing === 'string' ? ing : ing.full;
+    const nameText = typeof ing === 'string' ? ing : ing.name;
+    const isDone = checkedSet.has(fullText);
     const row = document.createElement('div');
     row.className = `ingredient-row${isDone ? ' done' : ''}`;
 
     row.innerHTML = `
-      <button class="ing-btn" data-rid="${recipe.id}" data-ing="${encodeURIComponent(ing)}">
+      <button class="ing-btn" data-rid="${recipe.id}" data-ing="${encodeURIComponent(fullText)}">
         <span class="ing-chevron">${isDone ? '✓' : '›'}</span>
-        <span class="ing-name">${ing}</span>
+        <span class="ing-name">${fullText}</span>
       </button>
-      <button class="store-btn" data-ing="${encodeURIComponent(ing)}">→ ${STORE_CONFIG[selectedStore].name}</button>
+      <button class="store-btn" data-ing="${encodeURIComponent(nameText)}">→ ${STORE_CONFIG[selectedStore].name}</button>
     `;
 
     row.querySelector('.ing-btn').addEventListener('click', function () {
