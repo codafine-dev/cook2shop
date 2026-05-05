@@ -1,17 +1,14 @@
 /**
- * COOK2SHOP — app.js v4.1 (Merged Edition)
- * Logique principale de l'application.
+ * COOK2SHOP — app.js v4
  *
- * Architecture :
- *   1. Configuration (URLs des IAs, template du prompt)
- *   2. État global (variables partagées entre fonctions)
- *   3. Flow principal (étapes 1 → 2 → 3)
- *   4. Gestion du localStorage (sauvegarde / lecture)
- *   5. Rendu des recettes (HTML dynamique)
- *   6. Actions sur les ingrédients (cocher, ouvrir Carrefour)
- *   7. Utilitaires (toast, escape, etc.)
- *   8. Initialisation (DOMContentLoaded)
+ * Nouveautés v4 :
+ * - Carte avec 3 onglets : Fiche / Courses / Étapes
+ * - Fiche : caractéristiques (personnes, temps) + aperçu ingrédients
+ * - Étapes : clic 1 = highlight, clic 2 = marquer fait, clic 3 = reset
+ * - Prompt enrichi : demande servings, prep_time, cook_time, main_cereal, steps
+ * - ChatGPT : ?q= auto | Gemini : clipboard + message Ctrl+V
  */
+
 
 /* ══════════════════════════════════════════════════════
    1. CONFIGURATION
@@ -32,16 +29,28 @@ const AI_CONFIG = {
  * Demande tous les champs nécessaires pour la fiche et les étapes.
  */
 function buildPrompt(url) {
-  return `Analyse cette recette : ${url}\n\nRéponds UNIQUEMENT avec un objet JSON strict, sans markdown, sans backticks, sans note, sans explication :\n{\n  \"title\": \"Nom de la recette\",\n  \"servings\": 4,\n  \"prep_time\": 10,\n  \"cook_time\": 15,\n  \"main_cereal\": \"Blé tendre\",\n  \"ingredients\": [\"225g de farine de blé\", \"3 oeufs\", \"50cl de lait\"],\n  \"steps\": [\"Mélanger la farine et le sucre.\", \"Ajouter les oeufs un par un.\"]\n}\n\nRègles :\n- servings : nombre entier de personnes\n- prep_time : minutes de préparation (entier)\n- cook_time : minutes de cuisson (entier)\n- main_cereal : céréale principale ou null\n- ingredients : liste de chaînes avec quantité + unité\n- steps : liste des étapes de préparation dans l'ordre\n- Si tu ne peux pas accéder à l'URL : {\"title\":\"\",\"ingredients\":[],\"steps\":[]}\n- Aucun autre texte autorisé`;
+  return `Analyse cette recette : ${url}
+
+Réponds UNIQUEMENT avec un objet JSON strict, sans markdown, sans backticks, sans note, sans explication :
+{
+  "title": "Nom de la recette",
+  "servings": 4,
+  "prep_time": 10,
+  "cook_time": 15,
+  "main_cereal": "Blé tendre",
+  "ingredients": ["225g de farine de blé", "3 oeufs", "50cl de lait"],
+  "steps": ["Mélanger la farine et le sucre.", "Ajouter les oeufs un par un."]
 }
 
-/**
- * Envoie un événement de télémétrie vers un endpoint distant.
- * Actuellement en mode 'simulé' (console), prêt à être connecté à un webhook ou API.
- */
-async function logEvent(event, data) {
-  console.log(`[Telemetry] ${event}:`, data);
-  // TODO: Connecter à un webhook (Make.com, Supabase, etc.)
+Règles :
+- servings : nombre entier de personnes
+- prep_time : minutes de préparation (entier)
+- cook_time : minutes de cuisson (entier)
+- main_cereal : céréale principale ou null
+- ingredients : liste de chaînes avec quantité + unité
+- steps : liste des étapes de préparation dans l'ordre
+- Si tu ne peux pas accéder à l'URL : {"title":"","ingredients":[],"steps":[]}
+- Aucun autre texte autorisé`;
 }
 
 
@@ -58,31 +67,13 @@ let currentUrl = '';
    ══════════════════════════════════════════════════════ */
 
 function preparePrompt() {
-  const urlInput = document.getElementById('urlInput');
-  const btn = document.getElementById('prepareBtn');
-  const url = urlInput.value.trim();
-  
+  const url = document.getElementById('urlInput').value.trim();
   if (!url) { showToast("Colle une URL de recette d'abord !"); return; }
-
-  // --- UX Update: Simulation de traitement ---
-  const originalText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Analyse...';
-
-  setTimeout(() => {
-    currentUrl = url;
-    
-    // Télémétrie
-    logEvent('recipe_prepared', { url: url });
-
-    document.getElementById('promptBox').textContent = buildPrompt(currentUrl);
-    document.getElementById('step2').style.display = 'block';
-    document.getElementById('step3').style.display = 'block';
-    document.getElementById('step2').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-    btn.disabled = false;
-    btn.textContent = originalText;
-  }, 600);
+  currentUrl = url;
+  document.getElementById('promptBox').textContent = buildPrompt(currentUrl);
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('step3').style.display = 'block';
+  document.getElementById('step2').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function selectAI(ai, el) {
@@ -95,12 +86,15 @@ function copyAndOpenAI() {
   const prompt = buildPrompt(currentUrl);
   const config = AI_CONFIG[selectedAI];
 
+  // Copie toujours dans le presse-papier (utile pour Gemini)
   navigator.clipboard.writeText(prompt).catch(() => {});
 
   if (config.auto) {
+    // ChatGPT : prompt pré-rempli via ?q=
     window.open(config.url(prompt), '_blank', 'noopener');
     showToast('Prompt envoyé !');
   } else {
+    // Gemini : clipboard + message explicite
     showToast('✓ Prompt copié — colle avec Ctrl+V dans Gemini');
     setTimeout(() => window.open(config.url(), '_blank', 'noopener'), 600);
   }
@@ -124,6 +118,12 @@ function importJSON() {
       throw new Error('Structure inattendue');
     }
 
+    // Fallback si l'IA n'a pas pu accéder à l'URL
+    if (!data.title) {
+      showToast("L'IA n'a pas pu accéder à la recette — essaie ChatGPT");
+      return;
+    }
+
     saveToLocal({
       title:       data.title,
       servings:    data.servings    || null,
@@ -135,11 +135,9 @@ function importJSON() {
       sourceUrl:   currentUrl || null,
     });
 
-    logEvent('ai_imported', { title: data.title, url: currentUrl });
-
     resetFlow();
     renderRecipes();
-    showToast(`\"${data.title}\" importée !`);
+    showToast(`"${data.title}" importée !`);
 
   } catch (e) {
     showToast('JSON invalide — vérifie la réponse de ton IA');
@@ -217,13 +215,22 @@ function renderRecipes() {
   const filtered = list.filter(r => !filter || r.date === filter);
 
   if (!filtered.length) {
-    container.innerHTML = `\\n      <div class=\\\"empty\\\">\\n        <span class=\\\"empty-icon\\\">🛒</span>\\n        <div class=\\\"empty-title\\\">Aucune recette importée</div>\\n      </div>`;
+    container.innerHTML = `
+      <div class="empty">
+        <span class="empty-icon">🛒</span>
+        <div class="empty-title">Aucune recette importée</div>
+      </div>`;
     return;
   }
 
   filtered.forEach(recipe => container.appendChild(buildRecipeCard(recipe)));
 }
 
+/**
+ * Construit la carte avec 3 onglets : Fiche / Courses / Étapes.
+ * Toutes les données passent par data-* attributes ou closures JS.
+ * Zéro onclick inline → pas de problème d'apostrophe ou caractère spécial.
+ */
 function buildRecipeCard(recipe) {
   const card = document.createElement('div');
   card.className = 'recipe-card';
@@ -233,8 +240,10 @@ function buildRecipeCard(recipe) {
   const totalIng   = recipe.ingredients.length;
   const totalSteps = (recipe.steps || []).length;
 
+  // État actif de l'étape (highlight temporaire, non persisté)
   let activeStep = null;
 
+  /* ── Compteur dans le header ── */
   function getMetaText() {
     const parts = [];
     if (checkedSet.size > 0) parts.push(`${checkedSet.size}/${totalIng} courses`);
@@ -242,9 +251,17 @@ function buildRecipeCard(recipe) {
     return parts.join(' · ') || `${totalIng} ingr.`;
   }
 
+  /* ── Header ── */
   const header = document.createElement('div');
   header.className = 'recipe-card-header';
-  header.innerHTML = `\\n    <div class=\\\"recipe-card-title\\\">${recipe.title}</div>\\n    <div class=\\\"recipe-card-meta\\\">${getMetaText()}</div>\\n    <div style=\\\"display:flex;gap:6px;align-items:center\\\">\\n      <button class=\\\"delete-btn\\\" title=\\\"Supprimer\\\">✕</button>\\n      <span class=\\\"recipe-card-chevron\\\">▾</span>\\n    </div>\\n  `;
+  header.innerHTML = `
+    <div class="recipe-card-title">${recipe.title}</div>
+    <div class="recipe-card-meta">${getMetaText()}</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="delete-btn" title="Supprimer">✕</button>
+      <span class="recipe-card-chevron">▾</span>
+    </div>
+  `;
 
   header.addEventListener('click', () => card.classList.toggle('open'));
   header.querySelector('.delete-btn').addEventListener('click', (e) => {
@@ -252,9 +269,11 @@ function buildRecipeCard(recipe) {
     deleteRecipe(recipe.id);
   });
 
+  /* ── Corps ── */
   const body = document.createElement('div');
   body.className = 'recipe-card-body';
 
+  /* ── Onglets ── */
   const tabs = document.createElement('div');
   tabs.className = 'recipe-tabs';
 
@@ -278,6 +297,7 @@ function buildRecipeCard(recipe) {
     tabs.appendChild(btn);
   });
 
+  /* ══ ONGLET FICHE ══ */
   const tabFiche = document.createElement('div');
   tabFiche.className = 'recipe-tab-content active';
   tabFiche.id = `tab-fiche-${recipe.id}`;
@@ -285,9 +305,10 @@ function buildRecipeCard(recipe) {
   const ficheGrid = document.createElement('div');
   ficheGrid.className = 'fiche-grid';
 
+  // Colonne gauche : caractéristiques
   const colLeft = document.createElement('div');
   colLeft.className = 'fiche-col';
-  colLeft.innerHTML = `<div class=\\\"fiche-col-title\\\">Caractéristiques</div>`;
+  colLeft.innerHTML = `<div class="fiche-col-title">Caractéristiques</div>`;
 
   const caracRows = [
     { label: 'Nombre de personnes', value: recipe.servings    ? `${recipe.servings} personnes` : null },
@@ -300,13 +321,14 @@ function buildRecipeCard(recipe) {
     if (!value) return;
     const row = document.createElement('div');
     row.className = 'fiche-row';
-    row.innerHTML = `<span class=\\\"fiche-label\\\">${label}</span><span class=\"fiche-value\">${value}</span>`;
+    row.innerHTML = `<span class="fiche-label">${label}</span><span class="fiche-value">${value}</span>`;
     colLeft.appendChild(row);
   });
 
+  // Colonne droite : liste ingrédients (aperçu)
   const colRight = document.createElement('div');
   colRight.className = 'fiche-col';
-  colRight.innerHTML = `<div class=\\\"fiche-col-title\\\">Ingrédients</div>`;
+  colRight.innerHTML = `<div class="fiche-col-title">Ingrédients</div>`;
 
   const ingPreview = document.createElement('div');
   ingPreview.className = 'fiche-ing-list';
@@ -317,6 +339,7 @@ function buildRecipeCard(recipe) {
   ficheGrid.appendChild(colRight);
   tabFiche.appendChild(ficheGrid);
 
+  /* ══ ONGLET COURSES ══ */
   const tabCourses = document.createElement('div');
   tabCourses.className = 'recipe-tab-content';
   tabCourses.id = `tab-courses-${recipe.id}`;
@@ -329,7 +352,14 @@ function buildRecipeCard(recipe) {
     const row = document.createElement('div');
     row.className = `ingredient-row${isDone ? ' done' : ''}`;
 
-    row.innerHTML = `\\n      <button class=\\\"ing-btn\\\" data-rid=\\\"${recipe.id}\\\" data-ing=\\\"${encodeURIComponent(ing)}\\\">\\n        <span class=\\\"ing-chevron\\\">${isDone ? '✓' : '›'}</span>\\n        <span class=\"ing-name\">${ing}</span>\\n      </button>\\n      <button class=\\\"carrefour-btn\\\" data-ing=\\\"${encodeURIComponent(ing)}\\\">→ Carrefour</button>\\n    `;
+    // Données dans data-* : pas de problème d'apostrophe
+    row.innerHTML = `
+      <button class="ing-btn" data-rid="${recipe.id}" data-ing="${encodeURIComponent(ing)}">
+        <span class="ing-chevron">${isDone ? '✓' : '›'}</span>
+        <span class="ing-name">${ing}</span>
+      </button>
+      <button class="carrefour-btn" data-ing="${encodeURIComponent(ing)}">→ Carrefour</button>
+    `;
 
     row.querySelector('.ing-btn').addEventListener('click', function () {
       const ingredient = decodeURIComponent(this.dataset.ing);
@@ -343,6 +373,8 @@ function buildRecipeCard(recipe) {
       const done = checkedSet.has(ingredient);
       row.classList.toggle('done', done);
       row.querySelector('.ing-chevron').textContent = done ? '✓' : '›';
+
+      // Mise à jour du compteur header
       header.querySelector('.recipe-card-meta').textContent = getMetaText();
     });
 
@@ -355,12 +387,13 @@ function buildRecipeCard(recipe) {
 
   tabCourses.appendChild(ingList);
 
+  /* ══ ONGLET ÉTAPES ══ */
   const tabEtapes = document.createElement('div');
   tabEtapes.className = 'recipe-tab-content';
   tabEtapes.id = `tab-etapes-${recipe.id}`;
 
   if (!recipe.steps || !recipe.steps.length) {
-    tabEtapes.innerHTML = `<div style=\\\"padding:20px 16px;font-size:13px;color:var(--text-muted)\\\">Aucune étape disponible pour cette recette.</div>`;
+    tabEtapes.innerHTML = `<div style="padding:20px 16px;font-size:13px;color:var(--text-muted)">Aucune étape disponible pour cette recette.</div>`;
   } else {
     const hint = document.createElement('div');
     hint.className = 'steps-hint';
@@ -380,20 +413,27 @@ function buildRecipeCard(recipe) {
 
       function renderRow() {
         row.className = getRowClass();
-        row.innerHTML = `\\n          <div class=\\\"step-circle\\\">${doneSet.has(idx) ? '✓' : idx + 1}</div>\\n          <div class=\\\"step-text\\\">${stepText}</div>\\n        `;
+        row.innerHTML = `
+          <div class="step-circle">${doneSet.has(idx) ? '✓' : idx + 1}</div>
+          <div class="step-text">${stepText}</div>
+        `;
       }
 
       renderRow();
 
       row.addEventListener('click', () => {
         if (activeStep === idx && !doneSet.has(idx)) {
+          // 2e clic → marquer comme fait
           doneSet.add(idx);
           activeStep = null;
         } else if (doneSet.has(idx)) {
+          // 3e clic → reset
           doneSet.delete(idx);
           activeStep = null;
         } else {
+          // 1er clic → highlight
           activeStep = idx;
+          // Retire le highlight des autres
           stepsList.querySelectorAll('.step-row').forEach(r => {
             if (r !== row) r.className = doneSet.has(parseInt(r.dataset.idx)) ? 'step-row done' : 'step-row';
           });
@@ -412,6 +452,7 @@ function buildRecipeCard(recipe) {
     tabEtapes.appendChild(stepsList);
   }
 
+  /* ── Assemblage ── */
   body.appendChild(tabs);
   body.appendChild(tabFiche);
   body.appendChild(tabCourses);
@@ -432,17 +473,19 @@ function clearDateFilter() {
    6. ACTIONS
    ══════════════════════════════════════════════════════ */
 
+/**
+ * Ouvre Carrefour dans un nouvel onglet.
+ * Nettoie la quantité : "200g de farine" → "farine"
+ */
 function openCarrefour(ingredient) {
-  // Nettoyage amélioré : retire quantités, unités, et mots de liaison
   const cleaned = ingredient
-    .replace(/^\\d+[\\d,.]*\\s*(g|kg|ml|l|cl|dl|cs|cc|tsp|tbsp|litre[s]?)?\\s*(de\\s|d')?/i, '')
-    .replace(/\\s*(et\\s|avec\\s|ou\\s)/i, ' ')
+    .replace(/^\d+[\d,.]*\s*(g|kg|ml|l|cl|dl|cs|cc|tsp|tbsp|litre[s]?)?\s*(de\s|d'|d')?/i, '')
     .trim();
   const query = cleaned || ingredient;
 
   navigator.clipboard.writeText(query).catch(() => {});
   window.open(`https://www.carrefour.fr/s?q=${encodeURIComponent(query)}`, '_blank', 'noopener');
-  showToast(`→ Carrefour : \\\"${query}\\\"`);
+  showToast(`→ Carrefour : "${query}"`);
 }
 
 
@@ -460,17 +503,12 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 2400);
 }
 
-function escapeStr(str) {
-  return str.replace(/'/g, \"\\\\'\").replace(/\"/g, '&quot;');
-}
-
 
 /* ══════════════════════════════════════════════════════
    8. INITIALISATION
    ══════════════════════════════════════════════════════ */
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderRecipes();
 
   // Listeners statiques
   document.getElementById('prepareBtn').addEventListener('click', preparePrompt);
@@ -498,4 +536,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.history.replaceState({}, document.title, '/');
     preparePrompt();
   }
+
+  renderRecipes();
 });

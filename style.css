@@ -1,1 +1,470 @@
-/* ============================================================\n   COOK2SHOP — style.css v4\n   Fond blanc pur, typographie éditoriale.\n   ============================================================ */\n\n*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n\n:root {\n  --bg:           #ffffff;\n  --surface:      #ffffff;\n  --surface2:     #f5f5f5;\n  --border:       #e8e8e8;\n  --border2:      #d0d0d0;\n  --text:         #1a1a1a;\n  --text-dim:     #666666;\n  --text-muted:   #aaaaaa;\n  --accent:       #c4440a;\n  --accent-light: #fff0ea;\n  --accent-glow:  rgba(196, 68, 10, 0.12);\n  --green:        #2d7a2d;\n  --green-light:  #edf5ed;\n}\n\nbody {\n  font-family: 'DM Mono', monospace;\n  background: var(--bg);\n  color: var(--text);\n  min-height: 100vh;\n  line-height: 1.5;\n}\n\n.app {\n  max-width: 640px;\n  margin: 0 auto;\n  padding: 0 20px 80px;\n}\n\n/* ── Header ── */\n.header {\n  padding: 40px 0 28px;\n  border-bottom: 2px solid var(--text);\n  margin-bottom: 36px;\n}\n\n.eyebrow {\n  font-size: 10px;\n  letter-spacing: 0.2em;\n  text-transform: uppercase;\n  color: var(--accent);\n  margin-bottom: 10px;\n}\n\n.title {\n  font-family: 'Libre Baskerville', serif;\n  font-size: clamp(30px, 6vw, 48px);\n  font-weight: 700;\n  line-height: 1;\n  letter-spacing: -1px;\n}\n\n.title em { font-style: italic; color: var(--accent); }\n\n.subtitle { font-size: 12px; color: var(--text-dim); margin-top: 8px; }\n\n/* ── Étapes ── */\n.step { margin-bottom: 28px; }\n\n.step-label {\n  font-size: 10px;\n  letter-spacing: 0.15em;\n  text-transform: uppercase;\n  color: var(--text-dim);\n  margin-bottom: 10px;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n\n.step-num {\n  width: 20px; height: 20px;\n  border-radius: 50%;\n  background: var(--accent-light);\n  border: 1px solid var(--accent);\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  font-size: 10px;\n  color: var(--accent);\n  flex-shrink: 0;\n}\n\n/* ── Inputs ── */\n.input-row { display: flex; gap: 8px; }\n\ninput[type=\"text\"],\ninput[type=\"date\"] {\n  flex: 1;\n  background: var(--surface);\n  border: 1.5px solid var(--border2);\n  border-radius: 3px;\n  padding: 12px 14px;\n  font-family: 'DM Mono', monospace;\n  font-size: 13px;\n  color: var(--text);\n  outline: none;\n  transition: border-color 0.2s, box-shadow 0.2s;\n}\n\ninput::placeholder { color: var(--text-muted); }\ninput:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }\n\n.paste-area {\n  width: 100%;\n  background: var(--surface);\n  border: 1.5px solid var(--border2);\n  border-radius: 3px;\n  padding: 12px 14px;\n  font-family: 'DM Mono', monospace;\n  font-size: 12px;\n  color: var(--text);\n  resize: vertical;\n  min-height: 90px;\n  outline: none;\n  transition: border-color 0.2s, box-shadow 0.2s;\n}\n\n.paste-area::placeholder { color: var(--text-muted); }\n.paste-area:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }\n\n/* ── Boutons ── */\n.btn {\n  padding: 12px 18px;\n  border-radius: 3px;\n  border: none;\n  cursor: pointer;\n  font-family: 'DM Mono', monospace;\n  font-size: 11px;\n  font-weight: 500;\n  letter-spacing: 0.08em;\n  text-transform: uppercase;\n  transition: all 0.15s;\n  white-space: nowrap;\n}\n\n.btn-accent { background: var(--accent); color: white; }\n.btn-accent:hover { background: #a83808; }\n\n.btn-outline {\n  background: transparent;\n  color: var(--text-dim);\n  border: 1.5px solid var(--border2);\n}\n.btn-outline:hover { border-color: var(--text); color: var(--text); }\n\n.btn-sm { padding: 6px 10px; font-size: 10px; }\n.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }\n\n/* ── Chips IA ── */\n.ai-chips { display: flex; gap: 8px; margin-bottom: 12px; }\n\n.ai-chip {\n  padding: 7px 16px;\n  border-radius: 20px;\n  border: 1.5px solid var(--border2);\n  background: var(--surface);\n  color: var(--text-dim);\n  font-family: 'DM Mono', monospace;\n  font-size: 12px;\n  cursor: pointer;\n  transition: all 0.15s;\n}\n\n.ai-chip:hover { border-color: var(--accent); color: var(--accent); }\n.ai-chip.active { background: var(--accent); border-color: var(--accent); color: white; }\n\n/* ── Prompt box ── */\n.prompt-box {\n  background: var(--surface2);\n  border: 1.5px solid var(--border);\n  border-radius: 3px;\n  padding: 12px 14px;\n  font-size: 12px;\n  color: var(--text-dim);\n  line-height: 1.7;\n  white-space: pre-wrap;\n  margin-bottom: 10px;\n  word-break: break-word;\n}\n\n/* ── Séparateur ── */\n.divider { border: none; border-top: 1.5px solid var(--border); margin: 28px 0; }\n\n/* ── Section recettes ── */\n.section-header {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  margin-bottom: 16px;\n  flex-wrap: wrap;\n  gap: 8px;\n}\n\n.section-title {\n  font-family: 'Libre Baskerville', serif;\n  font-size: 18px;\n  font-style: italic;\n}\n\n.filter-row { display: flex; gap: 6px; align-items: center; }\n\n/* ── Carte recette ── */\n.recipe-card {\n  background: var(--surface);\n  border: 1.5px solid var(--border);\n  border-radius: 6px;\n  margin-bottom: 10px;\n  animation: fadeIn 0.2s ease both;\n  overflow: hidden;\n}\n\n@keyframes fadeIn {\n  from { opacity: 0; transform: translateY(4px); }\n  to   { opacity: 1; transform: translateY(0); }\n}\n\n.recipe-card-header {\n  display: flex;\n  align-items: center;\n  padding: 14px 16px;\n  cursor: pointer;\n  gap: 12px;\n  transition: background 0.1s;\n}\n.recipe-card-header:hover { background: var(--surface2); }\n\n.recipe-card-title {\n  font-family: 'Libre Baskerville', serif;\n  font-size: 15px;\n  font-style: italic;\n  flex: 1;\n}\n\n.recipe-card-meta { font-size: 11px; color: var(--text-muted); white-space: nowrap; }\n\n.recipe-card-chevron {\n  color: var(--text-muted);\n  font-size: 12px;\n  transition: transform 0.2s;\n  flex-shrink: 0;\n}\n.recipe-card.open .recipe-card-chevron { transform: rotate(180deg); }\n\n/* ── Corps de la carte ── */\n.recipe-card-body { display: none; border-top: 1.5px solid var(--border); }\n.recipe-card.open .recipe-card-body { display: block; }\n\n/* ── Onglets ── */\n.recipe-tabs {\n  display: flex;\n  border-bottom: 1px solid var(--border);\n}\n\n.recipe-tab {\n  flex: 1;\n  padding: 10px 0;\n  font-size: 11px;\n  font-weight: 500;\n  letter-spacing: 0.05em;\n  text-transform: uppercase;\n  text-align: center;\n  cursor: pointer;\n  color: var(--text-muted);\n  border-bottom: 2px solid transparent;\n  background: none;\n  border-top: none;\n  border-left: none;\n  border-right: none;\n  font-family: 'DM Mono', monospace;\n  transition: all 0.15s;\n}\n.recipe-tab:hover { color: var(--text-dim); }\n.recipe-tab.active { color: var(--accent); border-bottom-color: var(--accent); }\n\n.recipe-tab-content { display: none; }\n.recipe-tab-content.active { display: block; }\n\n/* ── Onglet Fiche ── */\n.fiche-grid {\n  display: grid;\n  grid-template-columns: 1fr 1fr;\n  gap: 0;\n}\n\n.fiche-col { padding: 16px; }\n.fiche-col:first-child { border-right: 1px solid var(--border); }\n\n.fiche-col-title {\n  font-family: 'Libre Baskerville', serif;\n  font-size: 14px;\n  font-weight: 700;\n  margin-bottom: 12px;\n  color: var(--text);\n}\n\n.fiche-row { display: flex; flex-direction: column; margin-bottom: 8px; }\n.fiche-label { font-size: 11px; color: var(--text-muted); }\n.fiche-value { font-size: 13px; font-weight: 500; color: var(--text); }\n\n.fiche-ing-list {\n  font-size: 12px;\n  color: var(--text-dim);\n  line-height: 2;\n}\n\n/* ── Onglet Courses ── */\n.ing-list { padding: 0; }\n\n.ingredient-row {\n  display: flex;\n  align-items: stretch;\n  border-bottom: 1px solid var(--border);\n}\n.ingredient-row:last-child { border-bottom: none; }\n.ingredient-row.done { opacity: 0.38; }\n\n.ing-btn {\n  flex: 1;\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  padding: 11px 16px;\n  background: none;\n  border: none;\n  cursor: pointer;\n  text-align: left;\n  color: var(--text);\n  font-family: 'DM Mono', monospace;\n  transition: background 0.15s;\n}\n.ing-btn:hover { background: var(--surface2); }\n\n.ing-chevron { font-size: 13px; color: var(--text-muted); flex-shrink: 0; }\n.ingredient-row.done .ing-chevron { color: var(--green); }\n\n.ing-name { font-size: 13px; flex: 1; }\n.ingredient-row.done .ing-name { text-decoration: line-through; color: var(--text-muted); }\n\n.carrefour-btn {\n  padding: 0 14px;\n  background: none;\n  border: none;\n  border-left: 1px solid var(--border);\n  color: var(--text-muted);\n  font-family: 'DM Mono', monospace;\n  font-size: 10px;\n  letter-spacing: 0.08em;\n  text-transform: uppercase;\n  cursor: pointer;\n  transition: all 0.15s;\n  white-space: nowrap;\n  align-self: stretch;\n  display: flex;\n  align-items: center;\n}\n.carrefour-btn:hover { background: var(--accent); color: white; border-left-color: var(--accent); }\n\n/* ── Onglet Étapes ── */\n.steps-hint {\n  font-size: 11px;\n  color: var(--text-muted;\n  padding: 10px 16px 6px;\n}\n\n.steps-list { padding: 8px 12px 12px; }\n\n.step-row {\n  display: flex;\n  gap: 12px;\n  padding: 11px 10px;\n  margin-bottom: 4px;\n  border-radius: 4px;\n  cursor: pointer;\n  transition: background 0.15s, border-color 0.15s;\n  border: 1.5px solid transparent;\n  user-select: none;\n}\n.step-row:hover { background: var(--surface2); }\n.step-row.active {\n  background: var(--surface2);\n  border-color: var(--border2);\n}\n.step-row.done { opacity: 0.5; }\n\n.step-circle {\n  width: 24px; height: 24px;\n  border-radius: 50%;\n  border: 1.5px solid var(--border2);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  font-size: 11px;\n  font-weight: 500;\n  color: var(--text-dim);\n  flex-shrink: 0;\n  margin-top: 1px;\n  transition: all 0.15s;\n}\n.step-row.active .step-circle {\n  background: var(--text);\n  border-color: var(--text);\n  color: white;\n}\n.step-row.done .step-circle {\n  background: var(--green-light);\n  border-color: var(--green);\n  color: var(--green);\n}\n\n.step-text {\n  font-size: 13px;\n  line-height: 1.6;\n  color: var(--text-dim);\n  padding-top: 2px;\n  transition: color 0.15s;\n}\n.step-row.active .step-text { color: var(--text); font-weight: 500; }\n.step-row.done .step-text { text-decoration: line-through; }\n\n/* ── Bouton supprimer ── */\n.delete-btn {\n  display: inline-flex;\n  align-items: center;\n  padding: 3px 8px;\n  border-radius: 3px;\n  background: transparent;\n  border: 1px solid var(--border2);\n  color: var(--text-muted);\n  font-size: 11px;\n  cursor: pointer;\n  transition: all 0.15s;\n  font-family: 'DM Mono', monospace;\n}\n.delete-btn:hover { background: #fff0f0; border-color: #e88; color: #c44; }\n\n/* ── État vide ── */\n.empty { text-align: center; padding: 48px 0; color: var(--text-muted); }\n.empty-icon { font-size: 40px; margin-bottom: 12px; display: block; }\n.empty-title { font-family: 'Libre Baskerville', serif; font-size: 18px; font-style: italic; color: var(--text-dim); }\n\n/* ── Toast ── */\n.toast {\n  position: fixed;\n  bottom: 24px;\n  left: 50%;\n  transform: translateX(-50%);\n  background: var(--text);\n  color: white;\n  padding: 10px 18px;\n  border-radius: 3px;\n  font-size: 12px;\n  z-index: 100;\n  white-space: nowrap;\n  animation: toastIn 0.2s ease, toastOut 0.3s ease 2.1s forwards;\n}\n\n@keyframes toastIn {\n  from { opacity: 0; transform: translateX(-50%) translateY(8px); }\n  to   { opacity: 1; transform: translateX(-50%) translateY(0); }\n}\n@keyframes toastOut { to { opacity: 0; } }\n
+/* ============================================================
+   COOK2SHOP — style.css v4
+   Fond blanc pur, typographie éditoriale.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:           #ffffff;
+  --surface:      #ffffff;
+  --surface2:     #f5f5f5;
+  --border:       #e8e8e8;
+  --border2:      #d0d0d0;
+  --text:         #1a1a1a;
+  --text-dim:     #666666;
+  --text-muted:   #aaaaaa;
+  --accent:       #c4440a;
+  --accent-light: #fff0ea;
+  --accent-glow:  rgba(196, 68, 10, 0.12);
+  --green:        #2d7a2d;
+  --green-light:  #edf5ed;
+}
+
+body {
+  font-family: 'DM Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+/* ── Header ── */
+.header {
+  padding: 40px 0 28px;
+  border-bottom: 2px solid var(--text);
+  margin-bottom: 36px;
+}
+
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.title {
+  font-family: 'Libre Baskerville', serif;
+  font-size: clamp(30px, 6vw, 48px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.title em { font-style: italic; color: var(--accent); }
+
+.subtitle { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+
+/* ── Étapes ── */
+.step { margin-bottom: 28px; }
+
+.step-label {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-num {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  border: 1px solid var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── Inputs ── */
+.input-row { display: flex; gap: 8px; }
+
+input[type="text"],
+input[type="date"] {
+  flex: 1;
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-radius: 3px;
+  padding: 12px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input::placeholder { color: var(--text-muted); }
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+.paste-area {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-radius: 3px;
+  padding: 12px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+  resize: vertical;
+  min-height: 90px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.paste-area::placeholder { color: var(--text-muted); }
+.paste-area:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+/* ── Boutons ── */
+.btn {
+  padding: 12px 18px;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-accent { background: var(--accent); color: white; }
+.btn-accent:hover { background: #a83808; }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1.5px solid var(--border2);
+}
+.btn-outline:hover { border-color: var(--text); color: var(--text); }
+
+.btn-sm { padding: 6px 10px; font-size: 10px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+/* ── Chips IA ── */
+.ai-chips { display: flex; gap: 8px; margin-bottom: 12px; }
+
+.ai-chip {
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ai-chip:hover { border-color: var(--accent); color: var(--accent); }
+.ai-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+/* ── Prompt box ── */
+.prompt-box {
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 3px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  margin-bottom: 10px;
+  word-break: break-word;
+}
+
+/* ── Séparateur ── */
+.divider { border: none; border-top: 1.5px solid var(--border); margin: 28px 0; }
+
+/* ── Section recettes ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section-title {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 18px;
+  font-style: italic;
+}
+
+.filter-row { display: flex; gap: 6px; align-items: center; }
+
+/* ── Carte recette ── */
+.recipe-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  animation: fadeIn 0.2s ease both;
+  overflow: hidden;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.recipe-card-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  gap: 12px;
+  transition: background 0.1s;
+}
+.recipe-card-header:hover { background: var(--surface2); }
+
+.recipe-card-title {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 15px;
+  font-style: italic;
+  flex: 1;
+}
+
+.recipe-card-meta { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+.recipe-card-chevron {
+  color: var(--text-muted);
+  font-size: 12px;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.recipe-card.open .recipe-card-chevron { transform: rotate(180deg); }
+
+/* ── Corps de la carte ── */
+.recipe-card-body { display: none; border-top: 1.5px solid var(--border); }
+.recipe-card.open .recipe-card-body { display: block; }
+
+/* ── Onglets ── */
+.recipe-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.recipe-tab {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: 'DM Mono', monospace;
+  transition: all 0.15s;
+}
+.recipe-tab:hover { color: var(--text-dim); }
+.recipe-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.recipe-tab-content { display: none; }
+.recipe-tab-content.active { display: block; }
+
+/* ── Onglet Fiche ── */
+.fiche-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.fiche-col { padding: 16px; }
+.fiche-col:first-child { border-right: 1px solid var(--border); }
+
+.fiche-col-title {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.fiche-row { display: flex; flex-direction: column; margin-bottom: 8px; }
+.fiche-label { font-size: 11px; color: var(--text-muted); }
+.fiche-value { font-size: 13px; font-weight: 500; color: var(--text); }
+
+.fiche-ing-list {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 2;
+}
+
+/* ── Onglet Courses ── */
+.ing-list { padding: 0; }
+
+.ingredient-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border);
+}
+.ingredient-row:last-child { border-bottom: none; }
+.ingredient-row.done { opacity: 0.38; }
+
+.ing-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  transition: background 0.1s;
+}
+.ing-btn:hover { background: var(--surface2); }
+
+.ing-chevron { font-size: 13px; color: var(--text-muted); flex-shrink: 0; }
+.ingredient-row.done .ing-chevron { color: var(--green); }
+
+.ing-name { font-size: 13px; flex: 1; }
+.ingredient-row.done .ing-name { text-decoration: line-through; color: var(--text-muted); }
+
+.carrefour-btn {
+  padding: 0 14px;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+.carrefour-btn:hover { background: var(--accent); color: white; border-left-color: var(--accent); }
+
+/* ── Onglet Étapes ── */
+.steps-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 10px 16px 6px;
+}
+
+.steps-list { padding: 8px 12px 12px; }
+
+.step-row {
+  display: flex;
+  gap: 12px;
+  padding: 11px 10px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  border: 1.5px solid transparent;
+  user-select: none;
+}
+.step-row:hover { background: var(--surface2); }
+.step-row.active {
+  background: var(--surface2);
+  border-color: var(--border2);
+}
+.step-row.done { opacity: 0.5; }
+
+.step-circle {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.15s;
+}
+.step-row.active .step-circle {
+  background: var(--text);
+  border-color: var(--text);
+  color: white;
+}
+.step-row.done .step-circle {
+  background: var(--green-light);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.step-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  padding-top: 2px;
+  transition: color 0.15s;
+}
+.step-row.active .step-text { color: var(--text); font-weight: 500; }
+.step-row.done .step-text { text-decoration: line-through; }
+
+/* ── Bouton supprimer ── */
+.delete-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'DM Mono', monospace;
+}
+.delete-btn:hover { background: #fff0f0; border-color: #e88; color: #c44; }
+
+/* ── État vide ── */
+.empty { text-align: center; padding: 48px 0; color: var(--text-muted); }
+.empty-icon { font-size: 40px; margin-bottom: 12px; display: block; }
+.empty-title { font-family: 'Libre Baskerville', serif; font-size: 18px; font-style: italic; color: var(--text-dim); }
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 3px;
+  font-size: 12px;
+  z-index: 100;
+  white-space: nowrap;
+  animation: toastIn 0.2s ease, toastOut 0.3s ease 2.1s forwards;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes toastOut { to { opacity: 0; } }
