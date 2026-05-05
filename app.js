@@ -429,16 +429,29 @@ function buildRecipeCard(recipe) {
   tabCourses.className = 'recipe-tab-content';
   tabCourses.id = `tab-courses-${recipe.id}`;
 
-  const hoplaBtn = document.createElement('button');
-  hoplaBtn.className = 'btn btn-accent';
-  hoplaBtn.style.width = '100%';
-  hoplaBtn.style.marginBottom = '16px';
-  hoplaBtn.textContent = '📋 复制全部给 Hopla';
-  hoplaBtn.addEventListener('click', (e) => {
+  const actionRow = document.createElement('div');
+  actionRow.className = 'btn-row';
+  actionRow.style.marginBottom = '16px';
+
+  const copyUrlBtn = document.createElement('button');
+  copyUrlBtn.className = 'btn btn-outline btn-sm';
+  copyUrlBtn.textContent = 'Copier l\'URL Carrefour';
+  copyUrlBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    copyText('https://www.carrefour.fr/', 'URL copiée ! Collez-la dans votre navigateur 🌐');
+  });
+
+  const copyAllBtn = document.createElement('button');
+  copyAllBtn.className = 'btn btn-accent btn-sm';
+  copyAllBtn.textContent = 'Copier la liste pour Hopla';
+  copyAllBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     copyAllForHopla(recipe);
   });
-  tabCourses.appendChild(hoplaBtn);
+
+  actionRow.appendChild(copyUrlBtn);
+  actionRow.appendChild(copyAllBtn);
+  tabCourses.appendChild(actionRow);
 
   const storeChips = document.createElement('div');
   storeChips.className = 'ai-chips'; // Reuse AI chips styling
@@ -586,6 +599,14 @@ function openStore(query) {
   }
 }
 
+function copyText(text, toastMsg) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(toastMsg);
+  }).catch(() => {
+    showToast('Erreur de copie');
+  });
+}
+
 function selectStore(store, el) {
   selectedStore = store;
   document.querySelectorAll('.store-chip').forEach(c => c.classList.remove('active'));
@@ -606,12 +627,7 @@ function copyAllForHopla(recipe) {
 
   const prompt = `Bonjour Hopla, peux-tu ajouter ces ingrédients à mon panier s'il te plaît ?\\n\\n${list}`;
   
-  navigator.clipboard.writeText(prompt).then(() => {
-    showToast('📋 清单已复制！建议在浏览器打开家乐福 $\\rightarrow$ 粘贴给 Hopla 🛒');
-    window.open('https://www.carrefour.fr/', '_blank', 'noopener');
-  }).catch(() => {
-    showToast('复制失败，请重试');
-  });
+  copyText(prompt, '📋 Liste copiée ! Collez-la dans Hopla pour ajouter au panier 🛒');
 }
 
 function showToast(msg) {
