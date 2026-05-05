@@ -221,7 +221,11 @@ function renderRecipes() {
     container.innerHTML = `
       <div class="empty">
         <span class="empty-icon">🛒</span>
-        <div class="empty-title">Aucune recette importée</div>
+        <div class="empty-title">Bienvenue sur PanierRecette !</div>
+        <div class="empty-desc" style="font-size:13px; color:var(--text-dim); margin-top:12px; max-width:300px; margin-left:auto; margin-right:auto; line-height:1.6">
+          Transformez vos recettes préférées en listes de courses en un clin d'œil. <br>
+          Commencez par coller une URL ou le texte d'une recette ci-dessus.
+        </div>
       </div>`;
     return;
   }
@@ -498,70 +502,3 @@ function buildRecipeCard(recipe) {
 function clearDateFilter() {
   document.getElementById('dateFilter').value = '';
   renderRecipes();
-}
-
-/* ══════════════════════════════════════════════════════
-   6. ACTIONS
-   ══════════════════════════════════════════════════════ */
-
-function openCarrefour(ingredient) {
-  const cleaned = ingredient
-    .replace(/^\\d+[\\d,.]*\\s*(g|kg|ml|l|cl|dl|cs|cc|tsp|tbsp|litre[s]?)?\\s*(de\\s|d')?/i, '')
-    .replace(/\\s*(et\\s|avec\\s|ou\\s)/i, ' ')
-    .trim();
-  const query = cleaned || ingredient;
-
-  navigator.clipboard.writeText(query).catch(() => {});
-  window.open(`https://www.carrefour.fr/s?q=${encodeURIComponent(query)}`, '_blank', 'noopener');
-  showToast(`→ Carrefour : "${query}"`);
-}
-
-/* ══════════════════════════════════════════════════════
-   7. UTILITAIRES
-   ══════════════════════════════════════════════════════ */
-
-function showToast(msg) {
-  const existing = document.querySelector('.toast');
-  if (existing) existing.remove();
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2400);
-}
-
-function escapeStr(str) {
-  return str.replace(/'/g, "\\'").replace(/\"/g, '&quot;');
-}
-
-/* ══════════════════════════════════════════════════════
-   8. INITIALISATION
-   ══════════════════════════════════════════════════════ */
-
-document.addEventListener('DOMContentLoaded', () => {
-  renderRecipes();
-
-  document.getElementById('prepareBtn').addEventListener('click', preparePrompt);
-  document.getElementById('copyOpenBtn').addEventListener('click', copyAndOpenAI);
-  document.getElementById('copyOnlyBtn').addEventListener('click', copyPromptOnly);
-  document.getElementById('importBtn').addEventListener('click', importJSON);
-  document.getElementById('resetBtn').addEventListener('click', resetFlow);
-  document.getElementById('clearFilterBtn').addEventListener('click', clearDateFilter);
-  document.getElementById('dateFilter').addEventListener('change', renderRecipes);
-
-  document.getElementById('urlInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') preparePrompt();
-  });
-
-  document.querySelectorAll('.ai-chip').forEach(chip => {
-    chip.addEventListener('click', function () { selectAI(this.dataset.ai, this); });
-  });
-
-  const params = new URLSearchParams(window.location.search);
-  const sharedUrl = params.get('url') || params.get('text');
-  if (sharedUrl && sharedUrl.includes('http')) {
-    document.getElementById('urlInput').value = sharedUrl;
-    window.history.replaceState({}, document.title, '/');
-    preparePrompt();
-  }
-});
