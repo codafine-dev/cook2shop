@@ -238,7 +238,7 @@ function renderRecipes() {
   const container = document.getElementById('recipeContainer');
   container.innerHTML = '';
 
-  const filtered = list.filter(r => !filter || r.date === filter);
+  const filtered = list.filter(r => !filter || r.date.startsWith(filter));
 
   if (!filtered.length) {
     container.innerHTML = `
