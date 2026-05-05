@@ -16,7 +16,7 @@
 
 #### ✨ Sora (Experience & Product)
 - **Thesis:** The "Wow" moment is the accurate transition to the store.
-- **Action:** Refine the ingredient parsing to maximize the conversion rate from "Recipe Ingredient" $\rightarrow$ "Correct Product on Carrefour".
+- **Action:** Refine the ingredient parsing to maximize the conversion rate from "Recipe Ingredient" ➡️ "Correct Product on Carrefour".
 
 #### ⚖️ Atlas (Strategy & Compliance)
 - **Thesis:** "Dirty data" is only valuable if it's legally acquirable.
@@ -25,9 +25,9 @@
 ---
 
 ### 🚀 Strategic Roadmap
-1. **Telemetry Implementation:** Capture all inputs/outputs $\rightarrow$ Build the dataset.
+1. **Telemetry Implementation:** Capture all inputs/outputs ➡️ Build the dataset.
 2. **Viral Loop:** Spread the app to maximize volume.
-3. **Data Mapping:** Document the "Intent $\rightarrow$ Action" mapping.
+3. **Data Mapping:** Document the "Intent ➡️ Action" mapping.
 4. **Exit:** Sell the pipeline and the dataset to Carrefour as a training set for their AI.
 
 ---

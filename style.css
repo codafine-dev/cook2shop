@@ -93,7 +93,8 @@ body {
 .input-row { display: flex; gap: 8px; align-items: flex-start; }
 
 input[type="text"],
-input[type="date"] {
+input[type="date"],
+textarea#urlInput {
   flex: 1;
   background: var(--surface);
   border: 1.5px solid var(--border2);
@@ -470,3 +471,9 @@ input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-gl
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 @keyframes toastOut { to { opacity: 0; } }
+
+
+textarea#urlInput {
+  min-height: 100px;
+  resize: vertical;
+}
