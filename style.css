@@ -90,7 +90,7 @@ body {
 }
 
 /* ── Inputs ── */
-.input-row { display: flex; gap: 8px; }
+.input-row { display: flex; gap: 8px; align-items: flex-start; }
 
 input[type="text"],
 input[type="date"] {
