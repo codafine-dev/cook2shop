@@ -217,7 +217,7 @@ function renderRecipes() {
   const filtered = list.filter(r => !filter || r.date === filter);
 
   if (!filtered.length) {
-    container.innerHTML = `\n      <div class=\"empty\">\n        <span class=\"empty-icon\">🛒</span>\n        <div class=\"empty-title\">Aucune recette importée</div>\n      </div>`;
+    container.innerHTML = `\\n      <div class=\\\"empty\\\">\\n        <span class=\\\"empty-icon\\\">🛒</span>\\n        <div class=\\\"empty-title\\\">Aucune recette importée</div>\\n      </div>`;
     return;
   }
 
@@ -244,7 +244,7 @@ function buildRecipeCard(recipe) {
 
   const header = document.createElement('div');
   header.className = 'recipe-card-header';
-  header.innerHTML = `\n    <div class=\"recipe-card-title\">${recipe.title}</div>\n    <div class=\"recipe-card-meta\">${getMetaText()}</div>\n    <div style=\"display:flex;gap:6px;align-items:center\">\n      <button class=\"delete-btn\" title=\"Supprimer\">✕</button>\n      <span class=\"recipe-card-chevron\">▾</span>\n    </div>\n  `;
+  header.innerHTML = `\\n    <div class=\\\"recipe-card-title\\\">${recipe.title}</div>\\n    <div class=\\\"recipe-card-meta\\\">${getMetaText()}</div>\\n    <div style=\\\"display:flex;gap:6px;align-items:center\\\">\\n      <button class=\\\"delete-btn\\\" title=\\\"Supprimer\\\">✕</button>\\n      <span class=\\\"recipe-card-chevron\\\">▾</span>\\n    </div>\\n  `;
 
   header.addEventListener('click', () => card.classList.toggle('open'));
   header.querySelector('.delete-btn').addEventListener('click', (e) => {
@@ -287,7 +287,7 @@ function buildRecipeCard(recipe) {
 
   const colLeft = document.createElement('div');
   colLeft.className = 'fiche-col';
-  colLeft.innerHTML = `<div class=\"fiche-col-title\">Caractéristiques</div>`;
+  colLeft.innerHTML = `<div class=\\\"fiche-col-title\\\">Caractéristiques</div>`;
 
   const caracRows = [
     { label: 'Nombre de personnes', value: recipe.servings    ? `${recipe.servings} personnes` : null },
@@ -300,13 +300,13 @@ function buildRecipeCard(recipe) {
     if (!value) return;
     const row = document.createElement('div');
     row.className = 'fiche-row';
-    row.innerHTML = `<span class=\"fiche-label\">${label}</span><span class=\"fiche-value\">${value}</span>`;
+    row.innerHTML = `<span class=\\\"fiche-label\\\">${label}</span><span class=\"fiche-value\">${value}</span>`;
     colLeft.appendChild(row);
   });
 
   const colRight = document.createElement('div');
   colRight.className = 'fiche-col';
-  colRight.innerHTML = `<div class=\"fiche-col-title\">Ingrédients</div>`;
+  colRight.innerHTML = `<div class=\\\"fiche-col-title\\\">Ingrédients</div>`;
 
   const ingPreview = document.createElement('div');
   ingPreview.className = 'fiche-ing-list';
@@ -329,7 +329,7 @@ function buildRecipeCard(recipe) {
     const row = document.createElement('div');
     row.className = `ingredient-row${isDone ? ' done' : ''}`;
 
-    row.innerHTML = `\n      <button class=\"ing-btn\" data-rid=\"${recipe.id}\" data-ing=\"${encodeURIComponent(ing)}\">\n        <span class=\"ing-chevron\">${isDone ? '✓' : '›'}</span>\n        <span class=\"ing-name\">${ing}</span>\n      </button>\n      <button class=\"carrefour-btn\" data-ing=\"${encodeURIComponent(ing)}\">→ Carrefour</button>\n    `;
+    row.innerHTML = `\\n      <button class=\\\"ing-btn\\\" data-rid=\\\"${recipe.id}\\\" data-ing=\\\"${encodeURIComponent(ing)}\\\">\\n        <span class=\\\"ing-chevron\\\">${isDone ? '✓' : '›'}</span>\\n        <span class=\"ing-name\">${ing}</span>\\n      </button>\\n      <button class=\\\"carrefour-btn\\\" data-ing=\\\"${encodeURIComponent(ing)}\\\">→ Carrefour</button>\\n    `;
 
     row.querySelector('.ing-btn').addEventListener('click', function () {
       const ingredient = decodeURIComponent(this.dataset.ing);
@@ -360,7 +360,7 @@ function buildRecipeCard(recipe) {
   tabEtapes.id = `tab-etapes-${recipe.id}`;
 
   if (!recipe.steps || !recipe.steps.length) {
-    tabEtapes.innerHTML = `<div style=\"padding:20px 16px;font-size:13px;color:var(--text-muted)\">Aucune étape disponible pour cette recette.</div>`;
+    tabEtapes.innerHTML = `<div style=\\\"padding:20px 16px;font-size:13px;color:var(--text-muted)\\\">Aucune étape disponible pour cette recette.</div>`;
   } else {
     const hint = document.createElement('div');
     hint.className = 'steps-hint';
@@ -380,7 +380,7 @@ function buildRecipeCard(recipe) {
 
       function renderRow() {
         row.className = getRowClass();
-        row.innerHTML = `\n          <div class=\"step-circle\">${doneSet.has(idx) ? '✓' : idx + 1}</div>\n          <div class=\"step-text\">${stepText}</div>\n        `;
+        row.innerHTML = `\\n          <div class=\\\"step-circle\\\">${doneSet.has(idx) ? '✓' : idx + 1}</div>\\n          <div class=\\\"step-text\\\">${stepText}</div>\\n        `;
       }
 
       renderRow();
@@ -442,7 +442,7 @@ function openCarrefour(ingredient) {
 
   navigator.clipboard.writeText(query).catch(() => {});
   window.open(`https://www.carrefour.fr/s?q=${encodeURIComponent(query)}`, '_blank', 'noopener');
-  showToast(`→ Carrefour : \"${query}\"`);
+  showToast(`→ Carrefour : \\\"${query}\\\"`);
 }
 
 
@@ -461,7 +461,7 @@ function showToast(msg) {
 }
 
 function escapeStr(str) {
-  return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  return str.replace(/'/g, \"\\\\'\").replace(/\"/g, '&quot;');
 }
 
 
