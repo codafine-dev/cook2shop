@@ -586,9 +586,8 @@ function openStore(query) {
   if (!store) return;
 
   if (store.useCopy) {
-    const prompt = `Bonjour Hopla, peux-tu ajouter ceci à mon panier s'il te plaît ?\\n\\n- ${query}`;
-    navigator.clipboard.writeText(prompt).then(() => {
-      showToast(`📋 Copié ! Collez ceci dans Hopla 🛒`);
+    navigator.clipboard.writeText(query).then(() => {
+      showToast(`📋 ${query} copié ! Collez-le dans Carrefour 🛒`);
       window.open(store.url, '_blank', 'noopener');
     }).catch(() => {
       showToast('Erreur de copie');
