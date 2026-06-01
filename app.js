@@ -648,12 +648,22 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('copyOnlyBtn').addEventListener('click', copyPromptOnly);
   document.getElementById('importBtn').addEventListener('click', importJSON);
   document.getElementById('resetBtn').addEventListener('click', resetFlow);
-
+  
+  // Edit Link
+  const editBtn = document.getElementById('editLinkBtn');
+  if (editBtn) {
+    editBtn.addEventListener('click', () => {
+      document.getElementById('step1').style.display = 'block';
+      document.getElementById('step2').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('urlInput').focus();
+    });
+  }
+  
   // AI Chips
   document.querySelectorAll('.ai-chip').forEach(chip => {
     chip.addEventListener('click', (e) => selectAI(e.target.dataset.ai, e.target));
   });
-
+  
   // Filters
   const dateFilter = document.getElementById('dateFilter');
   dateFilter.addEventListener('change', renderRecipes);
@@ -661,5 +671,32 @@ document.addEventListener('DOMContentLoaded', () => {
     dateFilter.value = '';
     renderRecipes();
   });
-
-  // Initial Render\n  renderRecipes();\n  \n  // Web Share Target mobile\n  const params = new URLSearchParams(window.location.search);\n  const sharedUrl = params.get('url') || params.get('text');\n  if (sharedUrl && sharedUrl.includes('http')) {\n    document.getElementById('urlInput').value = sharedUrl;\n    window.history.replaceState({}, document.title, '/');\n    \n    // Cacher l'étape 1 si partage\n    document.getElementById('step1').style.display = 'none';\n    \n    preparePrompt();\n  }\n\n  // Change button color on input\n  document.getElementById('urlInput').addEventListener('input', (e) => {\n    const btn = document.getElementById('prepareBtn');\n    if (e.target.value.trim()) {\n      btn.classList.replace('btn-accent', 'btn-success');\n    } else {\n      btn.classList.replace('btn-success', 'btn-accent');\n    }\n  });\n});
+  
+  // Initial Render
+  renderRecipes();
+  
+  // Web Share Target mobile
+  const params = new URLSearchParams(window.location.search);
+  const sharedUrl = params.get('url') || params.get('text');
+  if (sharedUrl && sharedUrl.includes('http')) {
+    document.getElementById('urlInput').value = sharedUrl;
+    window.history.replaceState({}, document.title, '/');
+    
+    // Cacher l'étape 1 si partage
+    document.getElementById('step1').style.display = 'none';
+    
+    preparePrompt();
+  }
+  
+  // Change button color on input
+  document.getElementById('urlInput').addEventListener('input', (e) => {
+    const btn = document.getElementById('prepareBtn');
+    if (e.target.value.trim()) {
+      btn.classList.remove('btn-accent');
+      btn.classList.add('btn-success');
+    } else {
+      btn.classList.remove('btn-success');
+      btn.classList.add('btn-accent');
+    }
+  });
+}););
