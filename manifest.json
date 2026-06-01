@@ -1,6 +1,6 @@
 {
-    "name": "Cook2Shop",
-    "short_name": "C2S",
+    "name": "PanierRecette",
+    "short_name": "PanierRecette",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",

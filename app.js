@@ -661,4 +661,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial Render
   renderRecipes();
+  
+  // Web Share Target mobile
+  const params = new URLSearchParams(window.location.search);
+  const sharedUrl = params.get('url') || params.get('text');
+  if (sharedUrl && sharedUrl.includes('http')) {
+    document.getElementById('urlInput').value = sharedUrl;
+    window.history.replaceState({}, document.title, '/');
+    preparePrompt();
+  }
 });
