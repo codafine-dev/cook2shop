@@ -699,4 +699,4 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('btn-accent');
     }
   });
-}););
+});
