@@ -82,20 +82,23 @@ function preparePrompt() {
   const url = urlInput.value.trim();
   
   if (!url) { showToast("Colle une URL de recette d'abord !"); return; }
-
+  
+  btn.classList.remove('btn-accent');
+  btn.classList.add('btn-success');
+  
   const originalText = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Analyse...';
-
+  
   setTimeout(() => {
     currentUrl = url;
     logEvent('recipe_prepared', { url: url });
-
+    
     document.getElementById('promptBox').textContent = buildPrompt(currentUrl);
     document.getElementById('step2').style.display = 'block';
     document.getElementById('step3').style.display = 'block';
     document.getElementById('step2').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
+    
     btn.disabled = false;
     btn.textContent = originalText;
   }, 600);
