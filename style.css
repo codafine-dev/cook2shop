@@ -144,7 +144,7 @@ input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-gl
 }
 
 .btn-accent { background: var(--accent); color: white; }
-.btn-accent:hover { background: #a83808; }
+.btn-accent { background: var(--accent); color: white; }\n.btn-accent:hover { background: #a83808; }\n\n.btn-success { background: var(--green); color: white; }\n.btn-success:hover { background: #246324; }\n\n.btn-outline {
 
 .btn-outline {
   background: transparent;

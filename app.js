@@ -659,15 +659,4 @@ document.addEventListener('DOMContentLoaded', () => {
     renderRecipes();
   });
 
-  // Initial Render
-  renderRecipes();
-  
-  // Web Share Target mobile
-  const params = new URLSearchParams(window.location.search);
-  const sharedUrl = params.get('url') || params.get('text');
-  if (sharedUrl && sharedUrl.includes('http')) {
-    document.getElementById('urlInput').value = sharedUrl;
-    window.history.replaceState({}, document.title, '/');
-    preparePrompt();
-  }
-});
+  // Initial Render\n  renderRecipes();\n  \n  // Web Share Target mobile\n  const params = new URLSearchParams(window.location.search);\n  const sharedUrl = params.get('url') || params.get('text');\n  if (sharedUrl && sharedUrl.includes('http')) {\n    document.getElementById('urlInput').value = sharedUrl;\n    window.history.replaceState({}, document.title, '/');\n    \n    // Cacher l'étape 1 si partage\n    document.getElementById('step1').style.display = 'none';\n    \n    preparePrompt();\n  }\n\n  // Change button color on input\n  document.getElementById('urlInput').addEventListener('input', (e) => {\n    const btn = document.getElementById('prepareBtn');\n    if (e.target.value.trim()) {\n      btn.classList.replace('btn-accent', 'btn-success');\n    } else {\n      btn.classList.replace('btn-success', 'btn-accent');\n    }\n  });\n});
