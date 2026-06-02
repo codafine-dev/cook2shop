@@ -9,7 +9,7 @@
 
 const AI_CONFIG = {
   chatgpt: { auto: true,  url: (p) => `https://chatgpt.com/?q=${encodeURIComponent(p)}` },
-  gemini:  { auto: false, url: ()  => 'https://gemini.google.com/app' },
+  gemini:  { auto: true,  url: (p) => `https://gemini.google.com/app?q=${encodeURIComponent(p)}` },
 };
 
 const STORE_CONFIG = {
