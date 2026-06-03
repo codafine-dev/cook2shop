@@ -30,6 +30,34 @@ const STORE_CONFIG = {
   },
 };
 
+const DEFAULT_RECIPES = [
+  {
+    title: "Madeleines au Sucre Roux",
+    servings: 3,
+    prep_time: 20,
+    cook_time: 9,
+    main_cereal: null,
+    tags: ["sans cadmium", "gluten free", "sucré reduit"],
+    ingredients: [
+      { "full": "90 g de farine de pois chiches", "name": "farine de pois chiches" },
+      { "full": "20 g de farine de coco", "name": "farine de coco" },
+      { "full": "10 g de fécule de tapioca", "name": "fécule de tapioca" },
+      { "full": "25 g de sucre roux", "name": "sucre roux" },
+      { "full": "2 œufs", "name": "œufs" },
+      { "full": "100 g de beurre fondu", "name": "beurre fondu" },
+      { "full": "50 g de lait entier", "name": "lait entier" },
+      { "full": "5 g de poudre à lever sans phosphate", "name": "poudre à lever" }
+    ],
+    steps: [
+      "Fouetter vigoureusement les œufs et le sucre roux jusqu'à ce que le mélange double de volume.",
+      "Tamiser ensemble la farine de pois chiches, la farine de coco, la fécule de tapioca et la poudre à lever.",
+      "Ajouter les ingrédients secs au mélange d'œufs en alternant avec le lait, puis incorporer le beurre fondu tiède.",
+      "Laisser reposer la pâte au réfrigérateur pendant au moins 2 heures.",
+      "Préchauffer le four à 210°C, remplir les moules aux trois quarts, cuire 4 minutes puis baisser à 180°C et poursuivre la cuisson 4 à 5 minutes."
+    ]
+  }
+];
+
 function buildPrompt(input) {
   return `Analyse cette recette (URL ou texte) : ${input}
 
@@ -40,6 +68,7 @@ Réponds UNIQUEMENT avec un objet JSON strict, sans markdown, sans backticks, sa
   "prep_time": 10,
   "cook_time": 15,
   "main_cereal": "Blé tendre",
+  "tags": ["tag1", "tag2"],
   "ingredients": [
     { "full": "225g de farine de blé", "name": "farine de blé" },
     { "full": "3 oeufs", "name": "oeufs" },
@@ -178,7 +207,8 @@ function resetFlow() {
 const STORAGE_KEY = 'c2s_recipes';
 
 function getRecipes() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  const local = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  return [...DEFAULT_RECIPES, ...local];
 }
 
 function saveToLocal(recipe) {
@@ -283,7 +313,10 @@ function buildRecipeCard(recipe) {
   const header = document.createElement('div');
   header.className = 'recipe-card-header';
   header.innerHTML = `
-    <div class="recipe-card-title">${recipe.title}</div>
+    <div style="display:flex; flex-direction:column; flex:1">
+      <div class="recipe-card-title">${recipe.title}</div>
+      <div class="recipe-tags">${(recipe.tags || []).map(t => `<span class="recipe-tag">${t}</span>`).join('')}</div>
+    </div>
     <div class="recipe-card-meta">${getMetaText()}</div>
     <div style="display:flex;gap:6px;align-items:center">
       <button class="delete-btn" title="Supprimer">✕</button>
