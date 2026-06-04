@@ -46,11 +46,11 @@ const DEFAULT_RECIPES = [
       { "full": "2 œufs", "name": "œufs" },
       { "full": "100 g de beurre fondu", "name": "beurre fondu" },
       { "full": "50 g de lait entier", "name": "lait entier" },
-      { "full": "5 g de poudre à lever sans phosphate", "name": "poudre à lever" }
+      { "full": "5 g de levure chimique", "name": "levure chimique" }
     ],
     steps: [
       "Fouetter vigoureusement les œufs et le sucre roux jusqu'à ce que le mélange double de volume.",
-      "Tamiser ensemble la farine de pois chiches, la farine de coco, la fécule de tapioca et la poudre à lever.",
+      "Tamiser ensemble la farine de pois chiches, la farine de coco, la fécule de tapioca et la levure chimique.",
       "Ajouter les ingrédients secs au mélange d'œufs en alternant avec le lait, puis incorporer le beurre fondu tiède.",
       "Laisser reposer la pâte au réfrigérateur pendant au moins 2 heures.",
       "Préchauffer le four à 210°C, remplir les moules aux trois quarts, cuire 4 minutes puis baisser à 180°C et poursuivre la cuisson 4 à 5 minutes."
