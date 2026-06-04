@@ -296,7 +296,7 @@ function renderRecipes() {
           Transformez vos recettes préférées en listes de courses en 3 étapes simples :<br>
           1️⃣ Collez une URL ou un texte<br>
           2️⃣ Laissez l'IA extraire les ingrédients<br>
-          3️⃣ Importez le résultat pour créer votre panier !
+          3️⃣ Importez le résultat pour créer votre panier !<br><br><a href="https://app.guidde.com/share/playbooks/qEJwyfB3fysx3hcpUJ5XRc" target="_blank" style="display:inline-block; margin-top:10px; padding:8px 16px; background:var(--accent); color:white; border-radius:20px; text-decoration:none; font-weight:bold; font-size:12px;">Voir la démo 📺</a>
         </div>
       </div>`;
     return;
