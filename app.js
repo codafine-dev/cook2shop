@@ -196,7 +196,7 @@ function importJSON() {
       sourceUrl:   currentUrl || null,
     });
 
-    logEvent('ai_imported', { title: data.title, url: currentUrl });
+    logEvent('ai_imported', { recipe: data, url: currentUrl });
     resetFlow();
     renderRecipes();
     showToast(`"${data.title}" importée !`);
