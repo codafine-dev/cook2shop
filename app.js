@@ -88,9 +88,23 @@ Règles :
 |- Aucun autre texte autorisé`;
 }
 
+const TELEMETRY_CONFIG = {
+  endpoint: window.ENV?.TELEMETRY_ENDPOINT || 'http://localhost:3000/log',
+};
+
 async function logEvent(event, data) {
   console.log(`[Telemetry] ${event}:`, data);
-  // TODO: Connecter à un webhook
+  try {
+    await fetch(TELEMETRY_CONFIG.endpoint, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, data }),
+      keepalive: true,
+    });
+  } catch (e) {
+    console.error('[Telemetry] Error sending event:', e);
+  }
 }
 
 /* ══════════════════════════════════════════════════════
