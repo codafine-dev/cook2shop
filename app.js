@@ -89,7 +89,7 @@ Règles :
 }
 
 const TELEMETRY_CONFIG = {
-  endpoint: window.ENV?.TELEMETRY_ENDPOINT || 'http://localhost:3000/log',
+  endpoint: '/api/log',
 };
 
 async function logEvent(event, data) {
