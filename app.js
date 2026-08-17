@@ -119,10 +119,39 @@ let selectedStore = 'carrefour';
    3. FLOW PRINCIPAL
    ══════════════════════════════════════════════════════ */
 
-function preparePrompt() {
+// share.google / search.app sont des liens raccourcis générés par Chrome/
+// l'app Google au moment du partage. Une IA (ChatGPT, Gemini, etc.) ne peut
+// pas suivre cette redirection depuis un simple prompt texte, elle répond
+// juste qu'elle n'arrive pas à accéder à la page. On résout ces liens côté
+// serveur (via /api/resolve-url) pour récupérer l'URL finale de la recette
+// avant de construire le prompt.
+function isGoogleShortLink(url) {
+  try {
+    const { hostname } = new URL(url);
+    return hostname === 'share.google' || hostname === 'search.app';
+  } catch {
+    return false;
+  }
+}
+
+async function resolveShortUrlIfNeeded(url) {
+  if (!isGoogleShortLink(url)) return url;
+  try {
+    const res = await fetch(`/api/resolve-url?url=${encodeURIComponent(url)}`);
+    if (!res.ok) return url;
+    const data = await res.json();
+    return data.resolvedUrl || url;
+  } catch {
+    // Dégradation silencieuse : on continue avec le lien court plutôt que
+    // de bloquer l'utilisateur.
+    return url;
+  }
+}
+
+async function preparePrompt() {
   const urlInput = document.getElementById('urlInput');
   const btn = document.getElementById('prepareBtn');
-  const url = urlInput.value.trim();
+  let url = urlInput.value.trim();
   
   if (!url) { showToast("Colle une URL de recette d'abord !"); return; }
   
@@ -131,6 +160,13 @@ function preparePrompt() {
   
   const originalText = btn.textContent;
   btn.disabled = true;
+
+  if (isGoogleShortLink(url)) {
+    btn.textContent = 'Résolution du lien...';
+    url = await resolveShortUrlIfNeeded(url);
+    urlInput.value = url;
+  }
+
   btn.textContent = 'Analyse...';
   
   setTimeout(() => {
