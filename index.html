@@ -85,5 +85,16 @@
 
 </div>
 <script src="app.js"></script>
+<script>
+  // Register service worker so the app is installable and the manifest's
+  // share_target actually gets registered with the OS share sheet.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.warn('SW registration failed:', err);
+      });
+    });
+  }
+</script>
 </body>
 </html>
