@@ -149,7 +149,6 @@ async function preparePrompt() {
 
   if (isGoogleShortLink(url)) {
     showShortLinkWarning(true);
-    showToast('⚠️ Lien Google raccourci — utilise le bouton "Partager" du site de la recette');
     return;
   }
   showShortLinkWarning(false);
@@ -771,12 +770,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Change button color on input
   document.getElementById('urlInput').addEventListener('input', (e) => {
     const btn = document.getElementById('prepareBtn');
-    if (e.target.value.trim()) {
+    const val = e.target.value.trim();
+    if (val) {
       btn.classList.remove('btn-accent');
       btn.classList.add('btn-success');
     } else {
       btn.classList.remove('btn-success');
       btn.classList.add('btn-accent');
     }
+    showShortLinkWarning(isGoogleShortLink(val));
   });
 });
