@@ -510,3 +510,19 @@ textarea#urlInput {
   min-height: 100px;
   resize: vertical;
 }
+
+.short-link-warning {
+  background: #fff3cd;
+  border: 1px solid #ffe08a;
+  color: #7a5c00;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.short-link-warning code {
+  background: rgba(0,0,0,0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+}

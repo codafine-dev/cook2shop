@@ -120,11 +120,12 @@ let selectedStore = 'carrefour';
    ══════════════════════════════════════════════════════ */
 
 // share.google / search.app sont des liens raccourcis générés par Chrome/
-// l'app Google au moment du partage. Une IA (ChatGPT, Gemini, etc.) ne peut
-// pas suivre cette redirection depuis un simple prompt texte, elle répond
-// juste qu'elle n'arrive pas à accéder à la page. On résout ces liens côté
-// serveur (via /api/resolve-url) pour récupérer l'URL finale de la recette
-// avant de construire le prompt.
+// l'app Google quand on partage depuis un résultat de recherche ou le fil
+// Discover, plutôt que depuis la page de la recette elle-même. Google bloque
+// activement toute tentative de résoudre ces liens côté serveur (403,
+// détection anti-bot) — impossible à contourner proprement. La seule vraie
+// solution : ouvrir la recette sur le site d'origine et utiliser SON bouton
+// "Partager" à elle, qui donne l'URL réelle directement.
 function isGoogleShortLink(url) {
   try {
     const { hostname } = new URL(url);
@@ -134,18 +135,9 @@ function isGoogleShortLink(url) {
   }
 }
 
-async function resolveShortUrlIfNeeded(url) {
-  if (!isGoogleShortLink(url)) return url;
-  try {
-    const res = await fetch(`/api/resolve-url?url=${encodeURIComponent(url)}`);
-    if (!res.ok) return url;
-    const data = await res.json();
-    return data.resolvedUrl || url;
-  } catch {
-    // Dégradation silencieuse : on continue avec le lien court plutôt que
-    // de bloquer l'utilisateur.
-    return url;
-  }
+function showShortLinkWarning(show) {
+  const warning = document.getElementById('shortLinkWarning');
+  if (warning) warning.style.display = show ? 'block' : 'none';
 }
 
 async function preparePrompt() {
@@ -154,19 +146,19 @@ async function preparePrompt() {
   let url = urlInput.value.trim();
   
   if (!url) { showToast("Colle une URL de recette d'abord !"); return; }
+
+  if (isGoogleShortLink(url)) {
+    showShortLinkWarning(true);
+    showToast('⚠️ Lien Google raccourci — utilise le bouton "Partager" du site de la recette');
+    return;
+  }
+  showShortLinkWarning(false);
   
   btn.classList.remove('btn-accent');
   btn.classList.add('btn-success');
   
   const originalText = btn.textContent;
   btn.disabled = true;
-
-  if (isGoogleShortLink(url)) {
-    btn.textContent = 'Résolution du lien...';
-    url = await resolveShortUrlIfNeeded(url);
-    urlInput.value = url;
-  }
-
   btn.textContent = 'Analyse...';
   
   setTimeout(() => {
@@ -765,10 +757,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('urlInput').value = sharedUrl;
     window.history.replaceState({}, document.title, '/');
     
-    // Cacher l'étape 1 si partage
-    document.getElementById('step1').style.display = 'none';
-    
-    preparePrompt();
+    if (isGoogleShortLink(sharedUrl)) {
+      // Lien Google raccourci : on garde l'étape 1 visible avec l'avertissement
+      // plutôt que de lancer une analyse qui échouera de toute façon.
+      showShortLinkWarning(true);
+    } else {
+      // Cacher l'étape 1 si partage
+      document.getElementById('step1').style.display = 'none';
+      preparePrompt();
+    }
   }
   
   // Change button color on input
