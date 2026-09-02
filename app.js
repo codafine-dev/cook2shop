@@ -247,13 +247,39 @@ function resetFlow() {
 
 const STORAGE_KEY = 'c2s_recipes';
 
+function getStoredRecipes() {
+  let stored;
+
+  try {
+    stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch {
+    stored = [];
+  }
+
+  if (!Array.isArray(stored)) stored = [];
+
+  // Older versions accidentally persisted the built-in demo recipe whenever
+  // a recipe was imported or updated. These copies have neither an id nor a date.
+  const cleaned = stored.filter(recipe => !(
+    recipe &&
+    recipe.title === DEFAULT_RECIPES[0].title &&
+    recipe.id == null &&
+    recipe.date == null
+  ));
+
+  if (cleaned.length !== stored.length) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+  }
+
+  return cleaned;
+}
+
 function getRecipes() {
-  const local = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  return [...DEFAULT_RECIPES, ...local];
+  return [...DEFAULT_RECIPES, ...getStoredRecipes()];
 }
 
 function saveToLocal(recipe) {
-  const list = getRecipes();
+  const list = getStoredRecipes();
   list.unshift({
     ...recipe,
     id: Date.now(),
@@ -265,7 +291,7 @@ function saveToLocal(recipe) {
 }
 
 function updateChecked(recipeId, checkedIngredients) {
-  const list = getRecipes();
+  const list = getStoredRecipes();
   const idx = list.findIndex(r => r.id === recipeId);
   if (idx !== -1) {
     list[idx].checkedIngredients = checkedIngredients;
@@ -274,7 +300,7 @@ function updateChecked(recipeId, checkedIngredients) {
 }
 
 function updateDoneSteps(recipeId, doneSteps) {
-  const list = getRecipes();
+  const list = getStoredRecipes();
   const idx = list.findIndex(r => r.id === recipeId);
   if (idx !== -1) {
     list[idx].doneSteps = doneSteps;
@@ -283,7 +309,7 @@ function updateDoneSteps(recipeId, doneSteps) {
 }
 
 function deleteRecipe(id) {
-  const list = getRecipes().filter(r => r.id !== id);
+  const list = getStoredRecipes().filter(r => r.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   renderRecipes();
   showToast('Recette supprimée');
