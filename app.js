@@ -114,6 +114,9 @@ async function logEvent(event, data) {
 let selectedAI = 'chatgpt';
 let currentUrl = '';
 let selectedStore = 'carrefour';
+let shoppingMode = false;
+const shoppingSelection = new Map();
+const excludedCombinedIngredients = new Set();
 
 /* ══════════════════════════════════════════════════════
    3. FLOW PRINCIPAL
@@ -338,6 +341,177 @@ function scaleIngredient(ing, currentServings, targetServings) {
   const newValue = (value * ratio).toFixed(2).replace(/\.00$/, '').replace(/\.0$/, '');
   return `${newValue}${unit} ${name}`.trim();
 }
+
+function getRecipeSelectionKey(recipe) {
+  return String(recipe.id || `demo:${recipe.title}`);
+}
+
+function formatQuantity(value) {
+  return Number(value.toFixed(2)).toString().replace('.', ',');
+}
+
+function getCombinedIngredients() {
+  const combined = new Map();
+  const knownUnits = new Set(['g', 'kg', 'mg', 'ml', 'cl', 'l']);
+
+  shoppingSelection.forEach(({ recipe, servings }) => {
+    const ratio = recipe.servings ? servings / recipe.servings : 1;
+    recipe.ingredients.forEach((ingredient) => {
+      const full = typeof ingredient === 'string' ? ingredient : ingredient.full;
+      const explicitName = typeof ingredient === 'string' ? null : ingredient.name;
+      const amountMatch = full.match(/^(\d+(?:[.,]\d+)?)\s*(.*)$/i);
+
+      if (!amountMatch) {
+        const text = scaleIngredient(full, recipe.servings, servings);
+        const key = `text:${text.toLocaleLowerCase('fr')}`;
+        if (!combined.has(key)) combined.set(key, { key, text });
+        return;
+      }
+
+      const amount = parseFloat(amountMatch[1].replace(',', '.')) * ratio;
+      let remainder = amountMatch[2].trim();
+      let unit = '';
+      let name = explicitName ? explicitName.trim() : '';
+
+      if (name) {
+        const lowerRemainder = remainder.toLocaleLowerCase('fr');
+        const lowerName = name.toLocaleLowerCase('fr');
+        const nameIndex = lowerRemainder.lastIndexOf(lowerName);
+        if (nameIndex !== -1) {
+          unit = remainder.slice(0, nameIndex).trim().replace(/\s+de$/i, '').replace(/^(?:de\s+|d')/i, '').trim();
+        }
+      } else {
+        const parts = remainder.split(/\s+/);
+        if (knownUnits.has((parts[0] || '').toLocaleLowerCase('fr'))) unit = parts.shift();
+        if (parts[0] && /^(?:de|d')$/i.test(parts[0])) parts.shift();
+        name = parts.join(' ') || remainder;
+      }
+
+      const normalizedName = name.toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+      const normalizedUnit = unit.toLocaleLowerCase('fr').replace(/\s+/g, '');
+      const key = `quantity:${normalizedName}:${normalizedUnit}`;
+      const existing = combined.get(key);
+      if (existing) existing.amount += amount;
+      else combined.set(key, { key, amount, unit, name });
+    });
+  });
+
+  return [...combined.values()].map((item) => ({
+    ...item,
+    text: item.text || `${formatQuantity(item.amount)}${item.unit ? ` ${item.unit}` : ''} ${item.name}`.trim(),
+  }));
+}
+
+function updateShoppingBar() {
+  const bar = document.getElementById('shoppingBar');
+  const count = document.getElementById('shoppingBarCount');
+  const reviewBtn = document.getElementById('reviewShoppingBtn');
+  if (!bar) return;
+
+  bar.hidden = !shoppingMode;
+  const recipeCount = shoppingSelection.size;
+  const ingredientCount = getCombinedIngredients().length;
+  count.textContent = recipeCount
+    ? `${recipeCount} recette${recipeCount > 1 ? 's' : ''} · ${ingredientCount} ingrédient${ingredientCount > 1 ? 's' : ''}`
+    : 'Choisis au moins une recette';
+  reviewBtn.disabled = recipeCount === 0;
+}
+
+function toggleRecipeForShopping(recipe) {
+  const key = getRecipeSelectionKey(recipe);
+  if (shoppingSelection.has(key)) shoppingSelection.delete(key);
+  else shoppingSelection.set(key, { recipe, servings: recipe.servings || 4 });
+  excludedCombinedIngredients.clear();
+  renderRecipes();
+  updateShoppingBar();
+}
+
+function changeShoppingServings(key, delta) {
+  const selected = shoppingSelection.get(key);
+  if (!selected) return;
+  selected.servings = Math.max(1, selected.servings + delta);
+  excludedCombinedIngredients.clear();
+  renderRecipes();
+  updateShoppingBar();
+}
+
+function setShoppingMode(enabled) {
+  shoppingMode = enabled;
+  const modeBtn = document.getElementById('shoppingModeBtn');
+  const review = document.getElementById('shoppingReview');
+  const container = document.getElementById('recipeContainer');
+  const section = document.querySelector('.recipes-section');
+
+  modeBtn.setAttribute('aria-pressed', String(enabled));
+  modeBtn.textContent = enabled ? 'Quitter le mode courses' : 'Préparer mes courses';
+  review.hidden = true;
+  container.hidden = false;
+  section.classList.remove('showing-shopping-review');
+
+  if (!enabled) {
+    shoppingSelection.clear();
+    excludedCombinedIngredients.clear();
+  }
+  renderRecipes();
+  updateShoppingBar();
+}
+
+function renderShoppingReview() {
+  const items = getCombinedIngredients();
+  const list = document.getElementById('combinedList');
+  const summary = document.getElementById('shoppingRecipeSummary');
+  const selected = [...shoppingSelection.values()];
+
+  summary.textContent = selected
+    .map(({ recipe, servings }) => `${recipe.title} · ${servings} pers.`)
+    .join('  ·  ');
+  list.innerHTML = '';
+
+  items.forEach((item) => {
+    const label = document.createElement('label');
+    label.className = 'combined-item';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = !excludedCombinedIngredients.has(item.key);
+    input.addEventListener('change', () => {
+      if (input.checked) excludedCombinedIngredients.delete(item.key);
+      else excludedCombinedIngredients.add(item.key);
+    });
+    const text = document.createElement('span');
+    text.textContent = item.text;
+    label.append(input, text);
+    list.appendChild(label);
+  });
+}
+
+function openShoppingReview() {
+  if (!shoppingSelection.size) return;
+  renderShoppingReview();
+  document.getElementById('recipeContainer').hidden = true;
+  document.getElementById('shoppingReview').hidden = false;
+  document.getElementById('shoppingBar').hidden = true;
+  document.querySelector('.recipes-section').classList.add('showing-shopping-review');
+  document.getElementById('shoppingReviewTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function editShoppingSelection() {
+  document.getElementById('shoppingReview').hidden = true;
+  document.getElementById('recipeContainer').hidden = false;
+  document.querySelector('.recipes-section').classList.remove('showing-shopping-review');
+  updateShoppingBar();
+  document.getElementById('recipesTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyCombinedForHopla() {
+  const items = getCombinedIngredients().filter((item) => !excludedCombinedIngredients.has(item.key));
+  if (!items.length) {
+    showToast('Choisis au moins un ingrédient');
+    return;
+  }
+  const text = `Bonjour Hopla, peux-tu ajouter ces ingrédients à mon panier s'il te plaît ?\n\n${items.map((item) => item.text).join('\n')}`;
+  copyText(text, 'Liste combinée copiée pour Hopla');
+}
+
 function renderRecipes() {
   const list = getRecipes();
   const filter = document.getElementById('dateFilter').value;
@@ -367,7 +541,9 @@ function renderRecipes() {
 function buildRecipeCard(recipe) {
   const card = document.createElement('div');
   const isNew = Date.now() - recipe.id < 600000;
-  card.className = 'recipe-card' + (isNew ? ' recipe-card-new' : '');
+  const selectionKey = getRecipeSelectionKey(recipe);
+  const selectedForShopping = shoppingSelection.get(selectionKey);
+  card.className = 'recipe-card' + (isNew ? ' recipe-card-new' : '') + (selectedForShopping ? ' selected-for-shopping' : '') + (shoppingMode ? ' shopping-mode' : '');
 
   const checkedSet = new Set(recipe.checkedIngredients || []);
   const doneSet    = new Set(recipe.doneSteps || []);
@@ -385,18 +561,19 @@ function buildRecipeCard(recipe) {
 
   const header = document.createElement('div');
   header.className = 'recipe-card-header';
-  header.setAttribute('role', 'button');
-  header.setAttribute('tabindex', '0');
-  header.setAttribute('aria-expanded', 'false');
   header.innerHTML = `
-    <div style="display:flex; flex-direction:column; flex:1">
-      <div class="recipe-card-title">${recipe.title}</div>
-      <div class="recipe-tags">${(recipe.tags || []).map(t => `<span class="recipe-tag">${t}</span>`).join('')}</div>
-    </div>
-    <div class="recipe-card-meta">${getMetaText()}</div>
-    <div style="display:flex;gap:6px;align-items:center">
-      ${recipe.id ? '<button class="delete-btn" title="Supprimer" aria-label="Supprimer cette recette">✕</button>' : ''}
+    ${shoppingMode ? `<button class="recipe-select-btn" type="button" aria-pressed="${Boolean(selectedForShopping)}" aria-label="${selectedForShopping ? 'Retirer' : 'Choisir'} ${recipe.title}"><span>${selectedForShopping ? '✓' : ''}</span></button>` : ''}
+    <button class="recipe-card-main" type="button" aria-expanded="false">
+      <span class="recipe-card-copy">
+        <span class="recipe-card-title">${recipe.title}</span>
+        <span class="recipe-tags">${(recipe.tags || []).map(t => `<span class="recipe-tag">${t}</span>`).join('')}</span>
+      </span>
+      <span class="recipe-card-meta">${getMetaText()}</span>
       <span class="recipe-card-chevron">▾</span>
+    </button>
+    ${selectedForShopping ? `<div class="shopping-servings"><button type="button" class="servings-step" data-delta="-1" aria-label="Une personne en moins">−</button><span><strong>${selectedForShopping.servings}</strong> personnes</span><button type="button" class="servings-step" data-delta="1" aria-label="Une personne en plus">＋</button></div>` : ''}
+    <div class="recipe-card-actions">
+      ${recipe.id ? '<button class="delete-btn" title="Supprimer" aria-label="Supprimer cette recette">✕</button>' : ''}
     </div>
   `;
 
@@ -407,16 +584,25 @@ function buildRecipeCard(recipe) {
     header.querySelector('.recipe-card-title').appendChild(badge);
   }
 
+  const mainButton = header.querySelector('.recipe-card-main');
+
   function toggleCard() {
     const isOpen = card.classList.toggle('open');
-    header.setAttribute('aria-expanded', String(isOpen));
+    mainButton.setAttribute('aria-expanded', String(isOpen));
   }
-  header.addEventListener('click', toggleCard);
-  header.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      toggleCard();
-    }
+  mainButton.addEventListener('click', () => {
+    if (shoppingMode) toggleRecipeForShopping(recipe);
+    else toggleCard();
+  });
+
+  const selectBtn = header.querySelector('.recipe-select-btn');
+  if (selectBtn) selectBtn.addEventListener('click', () => toggleRecipeForShopping(recipe));
+
+  header.querySelectorAll('.servings-step').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      changeShoppingServings(selectionKey, Number(button.dataset.delta));
+    });
   });
   const deleteBtn = header.querySelector('.delete-btn');
   if (deleteBtn) {
@@ -781,6 +967,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   addRecipeBtn.addEventListener('click', () => setImportPanel(importPanel.hidden));
   closeImportBtn.addEventListener('click', () => setImportPanel(false));
+  document.getElementById('shoppingModeBtn').addEventListener('click', () => setShoppingMode(!shoppingMode));
+  document.getElementById('cancelShoppingBtn').addEventListener('click', () => setShoppingMode(false));
+  document.getElementById('reviewShoppingBtn').addEventListener('click', openShoppingReview);
+  document.getElementById('editShoppingBtn').addEventListener('click', editShoppingSelection);
+  document.getElementById('copyCombinedBtn').addEventListener('click', copyCombinedForHopla);
 
   // Main Flow
   document.getElementById('prepareBtn').addEventListener('click', preparePrompt);
