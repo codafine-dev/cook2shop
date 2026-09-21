@@ -218,6 +218,7 @@ function importJSON() {
       prep_time:   data.prep_time   || null,
       cook_time:   data.cook_time   || null,
       main_cereal: data.main_cereal || null,
+      tags:        Array.isArray(data.tags) ? data.tags : [],
       ingredients: data.ingredients,
       steps:       Array.isArray(data.steps) ? data.steps : [],
       sourceUrl:   currentUrl || null,
@@ -226,6 +227,11 @@ function importJSON() {
     logEvent('ai_imported', { recipe: data, url: currentUrl });
     resetFlow();
     renderRecipes();
+    const importPanel = document.getElementById('importPanel');
+    const addRecipeBtn = document.getElementById('addRecipeBtn');
+    importPanel.hidden = true;
+    addRecipeBtn.setAttribute('aria-expanded', 'false');
+    document.getElementById('recipesTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
     showToast(`"${data.title}" importée !`);
   } catch (e) {
     showToast('JSON invalide — vérifie la réponse de ton IA');
@@ -323,13 +329,13 @@ function deleteRecipe(id) {
 function scaleIngredient(ing, currentServings, targetServings) {
   if (!currentServings || currentServings === targetServings) return ing;
   const ratio = targetServings / currentServings;
-  const regex = /^(\\d+(?:[.,]\\d+)?)\\s*([a-zA-Z°%]*)\\s*(?:de\\s|d')?(.+)$/i;
+  const regex = /^(\d+(?:[.,]\d+)?)\s*([a-zA-ZÀ-ÿ°%]*)\s*(?:de\s|d')?(.+)$/i;
   const match = ing.match(regex);
   if (!match) return ing;
   let value = parseFloat(match[1].replace(',', '.'));
   const unit = match[2];
   const name = match[3];
-  const newValue = (value * ratio).toFixed(2).replace(/\\.00$/, '').replace(/\\.0$/, '');
+  const newValue = (value * ratio).toFixed(2).replace(/\.00$/, '').replace(/\.0$/, '');
   return `${newValue}${unit} ${name}`.trim();
 }
 function renderRecipes() {
@@ -338,7 +344,7 @@ function renderRecipes() {
   const container = document.getElementById('recipeContainer');
   container.innerHTML = '';
 
-  const filtered = list.filter(r => !filter || r.date.startsWith(filter));
+  const filtered = list.filter(r => !filter || (r.date && r.date.startsWith(filter)));
 
   if (!filtered.length) {
     container.innerHTML = `
@@ -379,6 +385,9 @@ function buildRecipeCard(recipe) {
 
   const header = document.createElement('div');
   header.className = 'recipe-card-header';
+  header.setAttribute('role', 'button');
+  header.setAttribute('tabindex', '0');
+  header.setAttribute('aria-expanded', 'false');
   header.innerHTML = `
     <div style="display:flex; flex-direction:column; flex:1">
       <div class="recipe-card-title">${recipe.title}</div>
@@ -386,7 +395,7 @@ function buildRecipeCard(recipe) {
     </div>
     <div class="recipe-card-meta">${getMetaText()}</div>
     <div style="display:flex;gap:6px;align-items:center">
-      <button class="delete-btn" title="Supprimer">✕</button>
+      ${recipe.id ? '<button class="delete-btn" title="Supprimer" aria-label="Supprimer cette recette">✕</button>' : ''}
       <span class="recipe-card-chevron">▾</span>
     </div>
   `;
@@ -398,11 +407,24 @@ function buildRecipeCard(recipe) {
     header.querySelector('.recipe-card-title').appendChild(badge);
   }
 
-  header.addEventListener('click', () => card.classList.toggle('open'));
-  header.querySelector('.delete-btn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    deleteRecipe(recipe.id);
+  function toggleCard() {
+    const isOpen = card.classList.toggle('open');
+    header.setAttribute('aria-expanded', String(isOpen));
+  }
+  header.addEventListener('click', toggleCard);
+  header.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggleCard();
+    }
   });
+  const deleteBtn = header.querySelector('.delete-btn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteRecipe(recipe.id);
+    });
+  }
 
   const body = document.createElement('div');
   body.className = 'recipe-card-body';
@@ -560,7 +582,7 @@ function buildRecipeCard(recipe) {
   storeChips.className = 'ai-chips'; // Reuse AI chips styling
   Object.entries(STORE_CONFIG).forEach(([id, config]) => {
     const chip = document.createElement('button');
-    chip.className = 'ai-chip' + (selectedStore === id ? ' active' : '');
+    chip.className = 'ai-chip store-chip' + (selectedStore === id ? ' active' : '');
     chip.textContent = config.name;
     chip.addEventListener('click', (e) => selectStore(id, e.target));
     storeChips.appendChild(chip);
@@ -742,6 +764,24 @@ function showToast(msg) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  const importPanel = document.getElementById('importPanel');
+  const addRecipeBtn = document.getElementById('addRecipeBtn');
+  const closeImportBtn = document.getElementById('closeImportBtn');
+
+  function setImportPanel(open) {
+    importPanel.hidden = !open;
+    addRecipeBtn.setAttribute('aria-expanded', String(open));
+    if (open) {
+      importPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.setTimeout(() => document.getElementById('urlInput').focus(), 250);
+    } else {
+      addRecipeBtn.focus();
+    }
+  }
+
+  addRecipeBtn.addEventListener('click', () => setImportPanel(importPanel.hidden));
+  closeImportBtn.addEventListener('click', () => setImportPanel(false));
+
   // Main Flow
   document.getElementById('prepareBtn').addEventListener('click', preparePrompt);
   document.getElementById('copyOpenBtn').addEventListener('click', copyAndOpenAI);
@@ -779,6 +819,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const sharedUrl = params.get('url') || params.get('text');
   if (sharedUrl && sharedUrl.includes('http')) {
+    setImportPanel(true);
     document.getElementById('urlInput').value = sharedUrl;
     window.history.replaceState({}, document.title, '/');
     
