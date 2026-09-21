@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PanierRecette</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#f5f0e6">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -13,26 +13,52 @@
 <body>
 <div class="app">
 
-  <!-- HEADER -->
-    <div class="header">
+  <header class="header">
+    <div>
+      <div class="eyebrow">Le carnet qui fait les courses</div>
+      <div class="title">PanierRecette</div>
+    </div>
+    <button class="btn btn-accent add-recipe-btn" id="addRecipeBtn" aria-expanded="false" aria-controls="importPanel">＋ Ajouter</button>
+  </header>
 
-    <div class="title">PanierRecette</div>
-    <div class="subtitle">URL ou texte de recette → liste de courses → panier</div>
-  </div>
+  <main>
+  <!-- LISTE DES RECETTES -->
+  <section class="recipes-section" aria-labelledby="recipesTitle">
+    <div class="section-header">
+      <div>
+        <h1 class="section-title" id="recipesTitle">À cuisiner</h1>
+        <p class="section-intro">Tes recettes, leurs ingrédients et la liste de courses au même endroit.</p>
+      </div>
+      <div class="filter-row">
+        <label class="sr-only" for="dateFilter">Filtrer par mois</label>
+        <input type="month" id="dateFilter" />
+        <button class="btn btn-outline btn-sm" id="clearFilterBtn" aria-label="Effacer le filtre">✕</button>
+      </div>
+    </div>
+    <div id="recipeContainer"></div>
+  </section>
 
+  <!-- AJOUT D'UNE RECETTE -->
+  <section class="import-panel" id="importPanel" hidden aria-labelledby="importTitle">
+    <div class="import-heading">
+      <div>
+        <div class="eyebrow">Nouvelle recette</div>
+        <h2 id="importTitle">D’un lien à une liste claire</h2>
+      </div>
+      <button class="icon-btn" id="closeImportBtn" aria-label="Fermer">✕</button>
+    </div>
 
-  <!-- ÉTAPE 1 — URL -->
   <div class="step" id="step1">
     <div class="step-label">
       <span class="step-num">1</span>
-      Colle l'URL ou le texte de la recette
+      Colle le lien ou le texte de la recette
     </div>
     <div id="shortLinkWarning" class="short-link-warning" style="display:none">
       ⚠️ Lien Google raccourci — utilise le bouton "Partager" du site de la recette, pas celui de Google.
     </div>
     <div class="input-row">
       <textarea id="urlInput" placeholder="https://www.marmiton.org/... ou le texte de la recette"></textarea>
-      <button class="btn btn-accent" id="prepareBtn">Analyser</button>
+      <button class="btn btn-accent" id="prepareBtn">Continuer</button>
     </div>
   </div>
 
@@ -40,17 +66,17 @@
   <div class="step" id="step2" style="display:none">
     <div class="step-label">
       <span class="step-num">2</span>
-      Envoie ce prompt à ton IA
+      Ouvre ton assistant
     </div>
     <div class="ai-chips">
       <button class="ai-chip active" data-ai="chatgpt">ChatGPT</button>
       <button class="ai-chip" data-ai="gemini">Gemini</button>
     </div>
-    <div class="prompt-box" id="promptBox"></div>
+    <div class="prompt-box" id="promptBox" hidden></div>
     <div class="btn-row">
-      <button class="btn btn-accent" id="copyOpenBtn">📋 Copier &amp; ouvrir l'IA</button>
-      <button class="btn btn-outline" id="copyOnlyBtn">Copier seulement</button>
-      <button class="btn btn-outline btn-sm" id="editLinkBtn">Modifier le lien</button>
+      <button class="btn btn-accent" id="copyOpenBtn">Copier et ouvrir l’IA</button>
+      <button class="btn btn-text" id="copyOnlyBtn">Copier sans ouvrir</button>
+      <button class="btn btn-text" id="editLinkBtn">Modifier la recette</button>
     </div>
   </div>
 
@@ -58,29 +84,18 @@
   <div class="step" id="step3" style="display:none">
     <div class="step-label">
       <span class="step-num">3</span>
-      Colle la réponse JSON ici
+      Colle ici la réponse obtenue
     </div>
     <textarea class="paste-area" id="jsonInput"
       placeholder='{"title":"Pâte à crêpes","servings":4,"prep_time":10,"cook_time":15,"main_cereal":"Blé tendre","ingredients":["225g de farine","3 oeufs"],"steps":["Mélanger la farine..."]}'
     ></textarea>
     <div class="btn-row">
-      <button class="btn btn-accent" id="importBtn">Importer</button>
-      <button class="btn btn-outline" id="resetBtn">Recommencer</button>
+      <button class="btn btn-accent" id="importBtn">Ajouter à mes recettes</button>
+      <button class="btn btn-text" id="resetBtn">Recommencer</button>
     </div>
   </div>
-
-  <hr class="divider">
-
-  <!-- LISTE DES RECETTES -->
-  <div class="section-header">
-    <div class="section-title">Mes recettes</div>
-    <div class="filter-row">
-      <input type="month" id="dateFilter" />
-      <button class="btn btn-outline btn-sm" id="clearFilterBtn">✕</button>
-    </div>
-  </div>
-
-  <div id="recipeContainer"></div>
+  </section>
+  </main>
 
     <footer style="margin-top: 40px; text-align: center; font-size: 9px; color: var(--text-muted); opacity: 0.6;">
       © 2026 PanierRecette · <a href="terms.html" target="_blank" style="color: inherit; text-decoration: underline;">Conditions d'utilisation</a>
