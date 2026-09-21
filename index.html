@@ -29,13 +29,29 @@
         <h1 class="section-title" id="recipesTitle">À cuisiner</h1>
         <p class="section-intro">Tes recettes, leurs ingrédients et la liste de courses au même endroit.</p>
       </div>
-      <div class="filter-row">
-        <label class="sr-only" for="dateFilter">Filtrer par mois</label>
-        <input type="month" id="dateFilter" />
-        <button class="btn btn-outline btn-sm" id="clearFilterBtn" aria-label="Effacer le filtre">✕</button>
+      <div class="recipe-actions">
+        <button class="btn btn-outline shopping-mode-btn" id="shoppingModeBtn" aria-pressed="false">Préparer mes courses</button>
+        <div class="filter-row">
+          <label class="sr-only" for="dateFilter">Filtrer par mois</label>
+          <input type="month" id="dateFilter" />
+          <button class="btn btn-outline btn-sm" id="clearFilterBtn" aria-label="Effacer le filtre">✕</button>
+        </div>
       </div>
     </div>
     <div id="recipeContainer"></div>
+
+    <section class="shopping-review" id="shoppingReview" hidden aria-labelledby="shoppingReviewTitle">
+      <div class="shopping-review-heading">
+        <div>
+          <div class="eyebrow">Liste combinée</div>
+          <h2 id="shoppingReviewTitle">Mes courses</h2>
+          <p id="shoppingRecipeSummary"></p>
+        </div>
+        <button class="btn btn-text" id="editShoppingBtn">Modifier les recettes</button>
+      </div>
+      <div class="combined-list" id="combinedList"></div>
+      <button class="btn btn-accent shopping-copy-btn" id="copyCombinedBtn">Copier la liste pour Hopla</button>
+    </section>
   </section>
 
   <!-- AJOUT D'UNE RECETTE -->
@@ -96,6 +112,12 @@
   </div>
   </section>
   </main>
+
+  <div class="shopping-bar" id="shoppingBar" hidden aria-live="polite">
+    <button class="btn btn-text" id="cancelShoppingBtn">Annuler</button>
+    <div class="shopping-bar-count" id="shoppingBarCount">Aucune recette choisie</div>
+    <button class="btn btn-accent" id="reviewShoppingBtn" disabled>Voir ma liste</button>
+  </div>
 
     <footer style="margin-top: 40px; text-align: center; font-size: 9px; color: var(--text-muted); opacity: 0.6;">
       © 2026 PanierRecette · <a href="terms.html" target="_blank" style="color: inherit; text-decoration: underline;">Conditions d'utilisation</a>
