@@ -167,7 +167,8 @@ input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-gl
   white-space: nowrap;
 }
 .btn:focus-visible, .ai-chip:focus-visible, .recipe-tab:focus-visible, .icon-btn:focus-visible,
-.recipe-card-header:focus-visible, .step-row:focus-visible, .ing-btn:focus-visible, .store-btn:focus-visible {
+.recipe-card-main:focus-visible, .recipe-select-btn:focus-visible, .servings-step:focus-visible,
+.step-row:focus-visible, .ing-btn:focus-visible, .store-btn:focus-visible {
   outline: 3px solid rgba(196, 68, 10, 0.3);
   outline-offset: 2px;
 }
@@ -244,6 +245,8 @@ input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-gl
 }
 
 .filter-row { display: flex; gap: 6px; align-items: center; }
+.recipe-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.shopping-mode-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
 
 /* ── Carte recette ── */
 .recipe-card {
@@ -286,6 +289,70 @@ input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-gl
   transition: background 0.1s;
 }
 .recipe-card-header:hover { background: var(--surface2); }
+
+.recipe-card-main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.recipe-card-copy { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+.recipe-card-actions { display: flex; align-items: center; }
+
+.recipe-select-btn {
+  width: 44px; height: 44px; flex: 0 0 44px;
+  display: grid; place-items: center;
+  background: var(--surface); border: 1.5px solid var(--border2); color: white;
+  cursor: pointer;
+}
+.recipe-select-btn span { width: 24px; height: 24px; display: grid; place-items: center; border: 1.5px solid var(--border2); font-size: 14px; }
+.recipe-select-btn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-light); }
+.recipe-select-btn[aria-pressed="true"] span { background: var(--accent); border-color: var(--accent); }
+.recipe-card.selected-for-shopping { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.recipe-card.shopping-mode .delete-btn { display: none; }
+.recipe-card.shopping-mode .recipe-card-chevron { display: none; }
+
+.shopping-servings {
+  display: flex; align-items: center; gap: 8px;
+  padding-left: 8px; border-left: 1px solid var(--border);
+  font-size: 12px; color: var(--text-dim); white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.servings-step {
+  width: 44px; height: 44px; border: 1px solid var(--border2);
+  background: var(--surface); color: var(--text); cursor: pointer; font: inherit; font-size: 16px;
+}
+.servings-step:hover { border-color: var(--accent); color: var(--accent); }
+
+.shopping-bar {
+  position: fixed; z-index: 90; left: 50%; bottom: 16px; transform: translateX(-50%);
+  width: min(720px, calc(100% - 32px)); min-height: 72px;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px;
+  padding: 12px 16px; background: var(--surface); border: 1px solid var(--border2);
+  border-top: 3px solid var(--accent); box-shadow: 0 4px 16px rgba(56, 43, 27, 0.22);
+}
+.shopping-bar[hidden] { display: none; }
+.shopping-bar-count { text-align: center; font-size: 13px; color: var(--text-dim); }
+.shopping-bar .btn:disabled { background: var(--border2); color: var(--surface); cursor: not-allowed; }
+
+.shopping-review { background: var(--surface); border-top: 3px solid var(--accent); padding: 28px; }
+.shopping-review[hidden] { display: none; }
+.shopping-review-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.shopping-review h2 { font-family: 'Libre Baskerville', serif; font-size: 28px; }
+.shopping-review-heading p { max-width: 520px; margin-top: 8px; color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+.combined-list { border-top: 1px solid var(--border); margin-bottom: 24px; }
+.combined-item { display: flex; align-items: center; gap: 12px; min-height: 52px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 15px; }
+.combined-item input { width: 22px; height: 22px; accent-color: var(--accent); flex: 0 0 22px; }
+.combined-item:has(input:not(:checked)) span { text-decoration: line-through; color: var(--text-muted); }
+.shopping-copy-btn { width: 100%; min-height: 48px; }
+.showing-shopping-review .section-header { display: none; }
 
 .recipe-card-title {
   font-family: 'Libre Baskerville', serif;
@@ -572,9 +639,22 @@ textarea#urlInput {
   .filter-row input { flex: 1; min-height: 44px; }
 
   .recipe-card-header { padding: 16px 14px; gap: 8px; align-items: flex-start; }
+  .recipe-actions { width: 100%; justify-content: stretch; }
+  .shopping-mode-btn { width: 100%; min-height: 48px; }
   .recipe-card-title { font-size: 16px; line-height: 1.4; }
   .recipe-card-meta { display: none; }
+  .recipe-card-main { gap: 6px; }
+  .recipe-select-btn { margin-top: 1px; }
+  .recipe-card.selected-for-shopping .recipe-card-header { flex-wrap: wrap; }
+  .shopping-servings { width: 100%; justify-content: space-between; padding: 10px 0 0 52px; border-left: 0; border-top: 1px solid var(--border); }
   .delete-btn { min-width: 36px; min-height: 36px; justify-content: center; }
+
+  .shopping-bar { bottom: 8px; width: calc(100% - 16px); grid-template-columns: 1fr auto; gap: 8px; padding: 10px; }
+  .shopping-bar .btn-text { grid-row: 2; grid-column: 1 / -1; min-height: 36px; padding: 4px; }
+  .shopping-bar-count { text-align: left; font-size: 12px; }
+  .shopping-review { margin-inline: -16px; padding: 24px 16px 32px; }
+  .shopping-review-heading { flex-direction: column; gap: 8px; }
+  .shopping-review-heading .btn { padding-left: 0; }
 
   .import-panel { margin-inline: -16px; padding: 24px 16px 32px; box-shadow: none; }
   .import-heading h2 { font-size: 21px; }
