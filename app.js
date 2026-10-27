@@ -317,6 +317,90 @@ function updateDoneSteps(recipeId, doneSteps) {
   }
 }
 
+/* ── Sauvegarde : envoyer / importer toutes les recettes ── */
+
+function buildBackup() {
+  return {
+    app: 'cook2shop',
+    version: 1,
+    exported_at: new Date().toISOString(),
+    recipes: getStoredRecipes(),
+  };
+}
+
+async function exportRecipes() {
+  const backup = buildBackup();
+  if (!backup.recipes.length) { showToast('Aucune recette à envoyer'); return; }
+
+  const json = JSON.stringify(backup, null, 2);
+  const date = backup.exported_at.split('T')[0];
+  const title = `PanierRecette — ${backup.recipes.length} recettes (${date})`;
+  const text = `${title}\n\nPour les récupérer : ouvre PanierRecette, puis « Importer un fichier » avec la pièce jointe, ou colle tout ce texte dans « Importer le texte collé ».\n\n${json}`;
+
+  // Android Chrome only shares a fixed list of file types and .json is not on it,
+  // so fall back to a .txt file there. Import reads both.
+  const candidates = [
+    new File([json], `panierrecette-${date}.json`, { type: 'application/json' }),
+    new File([json], `panierrecette-${date}.txt`, { type: 'text/plain' }),
+  ];
+  const file = navigator.canShare && candidates.find(f => navigator.canShare({ files: [f] }));
+
+  if (file) {
+    try {
+      await navigator.share({ title, text, files: [file] });
+      logEvent('backup_exported', { count: backup.recipes.length });
+    } catch (e) {
+      if (e.name !== 'AbortError') showToast('Partage impossible');
+    }
+    return;
+  }
+
+  // Desktop: no file sharing. Download the file and copy the text instead.
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(candidates[0]);
+  link.download = candidates[0].name;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  copyText(text, 'Fichier téléchargé et texte copié');
+  logEvent('backup_exported', { count: backup.recipes.length });
+}
+
+function importBackup(raw) {
+  let data;
+  try {
+    // The email body has a short note before the JSON: keep only the JSON part.
+    const start = raw.search(/[[{]/);
+    const end = Math.max(raw.lastIndexOf('}'), raw.lastIndexOf(']'));
+    data = JSON.parse(raw.slice(start, end + 1));
+  } catch {
+    showToast('Texte illisible — copie tout le message');
+    return;
+  }
+
+  const incoming = Array.isArray(data) ? data : data.recipes;
+  if (!Array.isArray(incoming)) { showToast('Ce n’est pas une sauvegarde PanierRecette'); return; }
+
+  const list = getStoredRecipes();
+  const knownIds = new Set(list.map(r => r.id));
+  let added = 0;
+  incoming.forEach(recipe => {
+    if (!recipe || !recipe.title || !Array.isArray(recipe.ingredients)) return;
+    if (recipe.id != null && knownIds.has(recipe.id)) return;
+    const id = recipe.id ?? Date.now() + added;
+    list.push({ checkedIngredients: [], doneSteps: [], ...recipe, id });
+    knownIds.add(id);
+    added++;
+  });
+
+  list.sort((a, b) => b.id - a.id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  renderRecipes();
+  logEvent('backup_imported', { count: added });
+  showToast(added
+    ? `${added} recette${added > 1 ? 's' : ''} ajoutée${added > 1 ? 's' : ''}`
+    : 'Toutes ces recettes sont déjà là');
+}
+
 function deleteRecipe(id) {
   const list = getStoredRecipes().filter(r => r.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
@@ -720,6 +804,25 @@ function buildRecipeCard(recipe) {
     colLeft.appendChild(row);
   });
 
+  // sourceUrl holds whatever was pasted in step 1, which can be recipe text.
+  if (/^https?:\/\//i.test(recipe.sourceUrl || '')) {
+    const row = document.createElement('div');
+    row.className = 'fiche-row';
+    const label = document.createElement('span');
+    label.className = 'fiche-label';
+    label.textContent = 'Recette d’origine';
+    const link = document.createElement('a');
+    link.className = 'fiche-value fiche-link';
+    link.href = recipe.sourceUrl;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    try { link.textContent = new URL(recipe.sourceUrl).hostname.replace(/^www\./, ''); }
+    catch { link.textContent = recipe.sourceUrl; }
+    link.addEventListener('click', e => e.stopPropagation());
+    row.append(label, link);
+    colLeft.appendChild(row);
+  }
+
   const colRight = document.createElement('div');
   colRight.className = 'fiche-col';
   colRight.innerHTML = `<div class=\"fiche-col-title\">Ingrédients</div>`;
@@ -979,6 +1082,20 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('copyOnlyBtn').addEventListener('click', copyPromptOnly);
   document.getElementById('importBtn').addEventListener('click', importJSON);
   document.getElementById('resetBtn').addEventListener('click', resetFlow);
+
+  // Backup
+  document.getElementById('exportBtn').addEventListener('click', exportRecipes);
+  document.getElementById('backupFileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) importBackup(await file.text());
+    e.target.value = '';
+  });
+  document.getElementById('backupPasteBtn').addEventListener('click', () => {
+    const input = document.getElementById('backupPasteInput');
+    if (!input.value.trim()) { showToast('Colle d’abord le texte reçu'); return; }
+    importBackup(input.value);
+    input.value = '';
+  });
   
   // Edit Link
   const editBtn = document.getElementById('editLinkBtn');

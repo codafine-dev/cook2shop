@@ -111,6 +111,21 @@
     </div>
   </div>
   </section>
+
+  <!-- SAUVEGARDE / TRANSFERT -->
+  <section class="backup-section" aria-labelledby="backupTitle">
+    <h2 class="backup-title" id="backupTitle">Changer de téléphone</h2>
+    <p class="section-intro">Envoie-toi tes recettes par e-mail : le texte est dans le message et le fichier est en pièce jointe. Sur l’autre téléphone, importe le fichier ou colle le texte.</p>
+    <div class="btn-row">
+      <button class="btn btn-accent" id="exportBtn">Envoyer mes recettes</button>
+      <label class="btn btn-outline" for="backupFileInput">Importer un fichier</label>
+      <input type="file" id="backupFileInput" class="sr-only" accept=".json,.txt,application/json,text/plain">
+    </div>
+    <textarea class="paste-area" id="backupPasteInput" placeholder="…ou colle ici le texte reçu par e-mail"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-outline" id="backupPasteBtn">Importer le texte collé</button>
+    </div>
+  </section>
   </main>
 
   <div class="shopping-bar" id="shoppingBar" hidden aria-live="polite">
