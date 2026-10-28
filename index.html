@@ -112,6 +112,17 @@
   </div>
   </section>
 
+  <!-- GOOGLE DRIVE -->
+  <section class="backup-section" id="driveSection" aria-labelledby="driveTitle" hidden>
+    <h2 class="backup-title" id="driveTitle">Mes recettes sur tous mes téléphones</h2>
+    <p class="section-intro">Connecte-toi avec le même compte Google sur chaque téléphone. Tes recettes sont gardées dans ton Google Drive, dans un dossier caché que seule PanierRecette peut lire.</p>
+    <p class="section-intro" id="driveStatus" aria-live="polite"></p>
+    <div class="btn-row">
+      <button class="btn btn-accent" id="driveConnectBtn">Se connecter avec Google</button>
+      <button class="btn btn-text" id="driveDisconnectBtn" hidden>Se déconnecter</button>
+    </div>
+  </section>
+
   <!-- SAUVEGARDE / TRANSFERT -->
   <section class="backup-section" aria-labelledby="backupTitle">
     <h2 class="backup-title" id="backupTitle">Changer de téléphone</h2>
@@ -139,6 +150,7 @@
     </footer>
 
 </div>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <script src="app.js"></script>
 <script>
   // Register service worker so the app is installable and the manifest's

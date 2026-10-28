@@ -1,7 +1,4 @@
 {
   "name": "cook2shop",
-  "version": "1.0.0",
-  "dependencies": {
-    "mongodb": "^6.0.0"
-  }
+  "version": "1.0.0"
 }

@@ -88,25 +88,6 @@ Règles :
 |- Aucun autre texte autorisé`;
 }
 
-const TELEMETRY_CONFIG = {
-  endpoint: '/api/log',
-};
-
-async function logEvent(event, data) {
-  console.log(`[Telemetry] ${event}:`, data);
-  try {
-    await fetch(TELEMETRY_CONFIG.endpoint, {
-      method: 'POST',
-      mode: 'cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event, data }),
-      keepalive: true,
-    });
-  } catch (e) {
-    console.error('[Telemetry] Error sending event:', e);
-  }
-}
-
 /* ══════════════════════════════════════════════════════
    2. ÉTAT GLOBAL
    ══════════════════════════════════════════════════════ */
@@ -165,7 +146,6 @@ async function preparePrompt() {
   
   setTimeout(() => {
     currentUrl = url;
-    logEvent('recipe_prepared', { url: url });
     
     document.getElementById('promptBox').textContent = buildPrompt(currentUrl);
     document.getElementById('step2').style.display = 'block';
@@ -227,7 +207,6 @@ function importJSON() {
       sourceUrl:   currentUrl || null,
     });
 
-    logEvent('ai_imported', { recipe: data, url: currentUrl });
     resetFlow();
     renderRecipes();
     const importPanel = document.getElementById('importPanel');
@@ -292,11 +271,13 @@ function saveToLocal(recipe) {
   list.unshift({
     ...recipe,
     id: Date.now(),
+    updatedAt: Date.now(),
     date: new Date().toISOString().split('T')[0],
     checkedIngredients: [],
     doneSteps: [],
   });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  scheduleDriveSync();
 }
 
 function updateChecked(recipeId, checkedIngredients) {
@@ -304,7 +285,9 @@ function updateChecked(recipeId, checkedIngredients) {
   const idx = list.findIndex(r => r.id === recipeId);
   if (idx !== -1) {
     list[idx].checkedIngredients = checkedIngredients;
+    list[idx].updatedAt = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    scheduleDriveSync();
   }
 }
 
@@ -313,7 +296,9 @@ function updateDoneSteps(recipeId, doneSteps) {
   const idx = list.findIndex(r => r.id === recipeId);
   if (idx !== -1) {
     list[idx].doneSteps = doneSteps;
+    list[idx].updatedAt = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    scheduleDriveSync();
   }
 }
 
@@ -348,7 +333,6 @@ async function exportRecipes() {
   if (file) {
     try {
       await navigator.share({ title, text, files: [file] });
-      logEvent('backup_exported', { count: backup.recipes.length });
     } catch (e) {
       if (e.name !== 'AbortError') showToast('Partage impossible');
     }
@@ -362,7 +346,6 @@ async function exportRecipes() {
   link.click();
   URL.revokeObjectURL(link.href);
   copyText(text, 'Fichier téléchargé et texte copié');
-  logEvent('backup_exported', { count: backup.recipes.length });
 }
 
 function importBackup(raw) {
@@ -395,7 +378,7 @@ function importBackup(raw) {
   list.sort((a, b) => b.id - a.id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   renderRecipes();
-  logEvent('backup_imported', { count: added });
+  if (added) scheduleDriveSync();
   showToast(added
     ? `${added} recette${added > 1 ? 's' : ''} ajoutée${added > 1 ? 's' : ''}`
     : 'Toutes ces recettes sont déjà là');
@@ -404,8 +387,191 @@ function importBackup(raw) {
 function deleteRecipe(id) {
   const list = getStoredRecipes().filter(r => r.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  // Remember the id, or the next Drive sync would bring the recipe back.
+  setDeletedIds([...getDeletedIds(), id]);
   renderRecipes();
+  scheduleDriveSync();
   showToast('Recette supprimée');
+}
+
+/* ── Google Drive : les mêmes recettes sur tous les téléphones ── */
+// All recipes go into one hidden file in the user's own Google Drive
+// (appDataFolder: only this app can see it). The browser talks to Drive
+// directly, so there is no server and no database in between.
+
+const GOOGLE_CLIENT_ID = '';  // OAuth client (Web) from Google Cloud Console
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const DRIVE_FILE_NAME = 'panierrecette.json';
+const DELETED_KEY = 'c2s_deleted';
+const DRIVE_TOKEN_KEY = 'c2s_drive_token';
+const DRIVE_LINKED_KEY = 'c2s_drive_linked';
+
+let driveTokenClient = null;
+let driveSyncTimer = null;
+let driveSyncing = false;
+
+function getDeletedIds() {
+  try { return JSON.parse(localStorage.getItem(DELETED_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function setDeletedIds(ids) {
+  localStorage.setItem(DELETED_KEY, JSON.stringify([...new Set(ids)]));
+}
+
+// Access tokens last one hour. Keeping it lets a reload sync without a tap.
+function getDriveToken() {
+  try {
+    const t = JSON.parse(localStorage.getItem(DRIVE_TOKEN_KEY) || 'null');
+    return t && t.expires > Date.now() ? t.value : null;
+  } catch { return null; }
+}
+
+function isDriveLinked() {
+  return localStorage.getItem(DRIVE_LINKED_KEY) === '1';
+}
+
+async function driveFetch(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: { ...options.headers, Authorization: `Bearer ${getDriveToken()}` },
+  });
+  if (res.status === 401) localStorage.removeItem(DRIVE_TOKEN_KEY);
+  if (!res.ok) throw new Error(`Drive ${res.status}`);
+  return res;
+}
+
+async function findDriveFile() {
+  const q = encodeURIComponent(`name='${DRIVE_FILE_NAME}'`);
+  const res = await driveFetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id)`);
+  const { files } = await res.json();
+  return files.length ? files[0].id : null;
+}
+
+async function uploadDriveFile(fileId, data) {
+  const body = JSON.stringify(data);
+  if (fileId) {
+    await driveFetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+    return;
+  }
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify({ name: DRIVE_FILE_NAME, parents: ['appDataFolder'] })], { type: 'application/json' }));
+  form.append('file', new Blob([body], { type: 'application/json' }));
+  await driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', body: form });
+}
+
+// Read the Drive copy, merge it with this phone, write the result to both.
+// Same id on both sides: the most recently changed one wins.
+async function syncWithDrive() {
+  const fileId = await findDriveFile();
+  const remote = fileId
+    ? await (await driveFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`)).json()
+    : {};
+
+  const deleted = new Set([...getDeletedIds(), ...(remote.deleted || [])]);
+  const byId = new Map();
+  [...(remote.recipes || []), ...getStoredRecipes()].forEach(recipe => {
+    if (!recipe || recipe.id == null || deleted.has(recipe.id)) return;
+    const prev = byId.get(recipe.id);
+    if (!prev || (recipe.updatedAt || recipe.id) >= (prev.updatedAt || prev.id)) byId.set(recipe.id, recipe);
+  });
+  const list = [...byId.values()].sort((a, b) => b.id - a.id);
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  setDeletedIds([...deleted]);
+  renderRecipes();
+
+  await uploadDriveFile(fileId, {
+    app: 'cook2shop',
+    version: 1,
+    updated_at: new Date().toISOString(),
+    recipes: list,
+    deleted: [...deleted],
+  });
+  return list.length;
+}
+
+async function runDriveSync() {
+  if (driveSyncing || !getDriveToken()) { renderDriveStatus(); return; }
+  driveSyncing = true;
+  renderDriveStatus('Synchronisation…');
+  try {
+    const count = await syncWithDrive();
+    renderDriveStatus(`Synchronisé · ${count} recette${count > 1 ? 's' : ''} dans ton Google Drive`);
+  } catch (e) {
+    console.error('[Cook2Shop] Drive :', e);
+    renderDriveStatus(getDriveToken() ? 'Erreur de synchronisation — réessaie' : null);
+  } finally {
+    driveSyncing = false;
+  }
+}
+
+// Called after every local change. Waits a little so several ticks
+// in a row make one upload.
+function scheduleDriveSync() {
+  if (!isDriveLinked()) return;
+  clearTimeout(driveSyncTimer);
+  driveSyncTimer = setTimeout(runDriveSync, 1500);
+}
+
+// Opens Google's window. The first time, it asks for permission;
+// after that it closes by itself.
+function connectDrive() {
+  if (!window.google?.accounts?.oauth2) { showToast('Google ne répond pas — réessaie'); return; }
+  driveTokenClient ??= google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: (resp) => {
+      if (resp.error) { showToast('Connexion Google annulée'); return; }
+      localStorage.setItem(DRIVE_TOKEN_KEY, JSON.stringify({
+        value: resp.access_token,
+        expires: Date.now() + (resp.expires_in - 60) * 1000,
+      }));
+      localStorage.setItem(DRIVE_LINKED_KEY, '1');
+      runDriveSync();
+    },
+  });
+  driveTokenClient.requestAccessToken({ prompt: isDriveLinked() ? '' : 'consent' });
+}
+
+// Recipes stay on this phone; only the link to Google is removed.
+function disconnectDrive() {
+  const token = getDriveToken();
+  if (token && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(token);
+  localStorage.removeItem(DRIVE_TOKEN_KEY);
+  localStorage.removeItem(DRIVE_LINKED_KEY);
+  renderDriveStatus();
+  showToast('Déconnecté de Google');
+}
+
+function renderDriveStatus(message) {
+  const status = document.getElementById('driveStatus');
+  const connectBtn = document.getElementById('driveConnectBtn');
+  const disconnectBtn = document.getElementById('driveDisconnectBtn');
+  const linked = isDriveLinked();
+
+  connectBtn.hidden = linked && !!getDriveToken();
+  connectBtn.textContent = linked ? 'Synchroniser' : 'Se connecter avec Google';
+  disconnectBtn.hidden = !linked;
+  status.textContent = message
+    || (linked && !getDriveToken() ? 'Touche « Synchroniser » pour récupérer tes recettes' : '');
+}
+
+function initDrive() {
+  if (!GOOGLE_CLIENT_ID) return;
+  document.getElementById('driveSection').hidden = false;
+  document.getElementById('driveConnectBtn').addEventListener('click', connectDrive);
+  document.getElementById('driveDisconnectBtn').addEventListener('click', disconnectDrive);
+  renderDriveStatus();
+  if (isDriveLinked()) runDriveSync();
+  // Coming back to the app (e.g. after adding a recipe on the other phone).
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isDriveLinked()) runDriveSync();
+  });
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1082,6 +1248,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('copyOnlyBtn').addEventListener('click', copyPromptOnly);
   document.getElementById('importBtn').addEventListener('click', importJSON);
   document.getElementById('resetBtn').addEventListener('click', resetFlow);
+
+  initDrive();
 
   // Backup
   document.getElementById('exportBtn').addEventListener('click', exportRecipes);
