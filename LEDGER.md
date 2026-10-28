@@ -11,7 +11,7 @@
 **Cycle dates:** —
 
 **Next action (Atomic Task):**  
-- [ ] Create the Google OAuth client (Web, origin `https://cook2shop.vercel.app`, consent screen in Testing with Lin's Gmail as test user), put its ID in `GOOGLE_CLIENT_ID` (`app.js`), then sign in on both phones and check the recipes match
+- [ ] Once `recettes.codafine.fr` works (see local-storefront-agent LEDGER), create the Google OAuth client (Web, origin `https://recettes.codafine.fr`, consent screen in Testing with Lin's Gmail as test user), put its ID in `GOOGLE_CLIENT_ID` (`app.js`), then sign in on both phones and check the recipes match
 
 ---
 
@@ -34,6 +34,7 @@
 - **2026-10-27** — Moving recipes between phones stays local-first: a manual export/import through email, not accounts or server sync. It fits the zero-backend design and needs no login.
 - **2026-10-27** — The export email carries the full JSON twice: in the message body (to copy and paste) and as an attachment (to import as a file). Lin wanted both options.
 - **2026-10-28** — Same recipes on every phone through an optional Google sign-in, stored in the user's own Drive (`appDataFolder`), with no server and no database. This replaces the 10-27 "no accounts" choice for syncing; email export stays as the no-login option.
+- **2026-10-28** — PanierRecette moves to `recettes.codafine.fr` and is listed on codafine.fr/atelier/ (council in local-storefront-agent). The browser treats a new address as a new site, so recipes saved on `cook2shop.vercel.app` don't follow: move them with the email export first. Create the OAuth client only for the new address.
 - **2026-10-28** — MongoDB and `/api/log` removed: no telemetry at all. `terms.html` now says no data is collected.
 
 ### 🧩 LEARNINGS (The "How")
